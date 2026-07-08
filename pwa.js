@@ -35,7 +35,7 @@
       return;
     }
     try {
-      const registration = await navigator.serviceWorker.register('./service-worker.js?v=20260708-studio12');
+      const registration = await navigator.serviceWorker.register('./service-worker.js?v=20260708-studio13');
       registration.update();
       setStatus();
     } catch (error) {

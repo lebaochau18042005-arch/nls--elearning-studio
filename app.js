@@ -1457,6 +1457,8 @@ function renderSlideCanvas(scene, index, total) {
   const quiz = scene.type === 'quiz' && scene.question ? '<div class="canvas-quiz">' + esc(scene.question.prompt) + '</div>' : '';
   const script = state.lesson.includeTranscript ? '<p class="canvas-script">' + esc(scene.narration) + '</p>' : '';
   const objects = renderSceneObjects(scene);
+  const content = renderSceneContent(scene);
+  const media = renderSceneMedia(scene);
   const design = currentDesign();
   const designStyle = [
     '--slide-accent:' + (design.accent || '#255c99'),
@@ -1469,9 +1471,31 @@ function renderSlideCanvas(scene, index, total) {
   return '<div class="slide-frame slide-' + esc(scene.type) + ' designed-slide" style="' + esc(designStyle) + '">' +
     '<div class="slide-top"><span>' + sceneTypeLabel(scene.type) + '</span><span>' + (index + 1) + '/' + total + '</span></div>' +
     '<h3>' + esc(scene.title) + '</h3>' +
-    '<p>' + esc(scene.content) + '</p>' +
-    '<div class="canvas-media">' + esc(scene.visual) + '</div>' + objects + quiz + script +
+    content + media + objects + quiz + script +
   '</div>';
+}
+
+function renderSceneContent(scene) {
+  const bullets = Array.isArray(scene.bullets) ? scene.bullets.filter(Boolean) : [];
+  if (bullets.length) {
+    const intro = scene.content && bullets.join(' ').indexOf(scene.content) < 0
+      ? '<p>' + esc(scene.content) + '</p>'
+      : '';
+    return '<div class="canvas-content">' + intro + '<ul>' + bullets.map(function(item) {
+      return '<li>' + esc(item) + '</li>';
+    }).join('') + '</ul></div>';
+  }
+  return '<p>' + esc(scene.content || '') + '</p>';
+}
+
+function renderSceneMedia(scene) {
+  const visual = String(scene.visual || '').trim();
+  if (!visual) return '';
+  const isPptxSource = visual.indexOf('Nguồn PPTX:') === 0 || visual.indexOf('Nguon PPTX:') === 0;
+  if (isPptxSource) {
+    return '<p class="pptx-source-note">' + esc(visual) + '<br><small>App đã nhập phần chữ từ PowerPoint. Hình ảnh/hiệu ứng gốc cần bổ sung lại trong tab Thêm nếu cần.</small></p>';
+  }
+  return '<div class="canvas-media">' + esc(visual) + '</div>';
 }
 
 function renderSceneObjects(scene) {
@@ -2789,6 +2813,8 @@ function applySlidesToLesson(slides, filename) {
       title: slide.title || ('Slide ' + slide.number),
       layout: 'Nhập từ PowerPoint',
       content: content.slice(0, 520),
+      bullets: slide.bullets.slice(0, 12),
+      rawText: text,
       narration: narrationLine('Trình bày nội dung slide ' + slide.number + ': ' + text.slice(0, 220), state.plan),
       visual: 'Nguồn PPTX: ' + filename + ' - slide ' + slide.number,
       duration: Math.max(45, Math.min(120, 25 + Math.ceil(text.length / 8)))

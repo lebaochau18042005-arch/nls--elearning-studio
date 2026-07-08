@@ -902,6 +902,41 @@ button:focus-visible {
   line-height: 1.48;
 }
 
+.canvas-content {
+  display: grid;
+  gap: 8px;
+  color: #2b3b4e;
+  line-height: 1.48;
+}
+
+.canvas-content ul {
+  margin: 0;
+  padding-left: 1.2rem;
+  display: grid;
+  gap: 6px;
+}
+
+.canvas-content li {
+  padding-left: 2px;
+}
+
+.pptx-source-note {
+  align-self: end;
+  border: 1px solid #d6e1ec;
+  border-radius: 8px;
+  background: #f8fbff;
+  color: #607085;
+  padding: 10px 12px;
+  font-size: 0.86rem;
+}
+
+.pptx-source-note small {
+  display: block;
+  margin-top: 4px;
+  color: #7b8898;
+  line-height: 1.35;
+}
+
 .canvas-media,
 .canvas-quiz {
   border: 1px dashed #afbac7;

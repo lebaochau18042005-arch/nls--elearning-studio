@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nls-elearning-studio-v15-google-gemini';
+const CACHE_NAME = 'nls-elearning-studio-v16-pptx-content';
 const APP_SHELL = [
   './',
   './index.html',
