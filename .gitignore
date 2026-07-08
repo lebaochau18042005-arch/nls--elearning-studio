@@ -10,3 +10,5 @@ coverage
 *.zip
 Thumbs.db
 .DS_Store
+
+.vercel
