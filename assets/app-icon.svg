@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="NLS Planner">
+  <rect width="512" height="512" rx="96" fill="#255c99"/>
+  <path d="M128 142h256v228H128z" fill="#ffffff" opacity="0.96"/>
+  <path d="M160 182h192v28H160zm0 58h192v28H160zm0 58h118v28H160z" fill="#255c99"/>
+  <circle cx="360" cy="326" r="48" fill="#0f766e"/>
+  <path d="M339 326l14 14 31-35" fill="none" stroke="#ffffff" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="256" y="104" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="56" font-weight="800" fill="#ffffff">NLS</text>
+</svg>

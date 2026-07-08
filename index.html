@@ -1,0 +1,290 @@
+﻿<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>NLS E-Learning Studio</title>
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <meta name="theme-color" content="#255c99" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="NLS Studio" />
+    <link rel="icon" href="./assets/app-icon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./styles.css?v=20260708-studio12" />
+  </head>
+  <body>
+    <div class="mode-switchbar" role="navigation" aria-label="Chá»n cháº¿ Ä‘á»™ lÃ m viá»‡c">
+      <div class="mode-title">
+        <strong>NLS E-Learning Studio</strong>
+        <span>CÃ´ng cá»¥ táº¡o bÃ i giáº£ng tÆ°Æ¡ng tÃ¡c</span>
+      </div>
+      <div class="mode-tabs" role="tablist" aria-label="Cháº¿ Ä‘á»™ app">
+        <button class="mode-tab is-active" type="button" data-app-mode="studio">Studio tÆ°Æ¡ng tÃ¡c</button>
+        <button class="mode-tab" type="button" data-app-mode="planner">Trá»£ lÃ½ bÃ i dáº¡y</button>
+      </div>
+    </div>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="Cáº¥u hÃ¬nh káº¿ hoáº¡ch">
+        <header class="brand-block">
+          <div class="brand-mark" aria-hidden="true">
+            <span>NLS</span>
+          </div>
+          <div>
+            <p class="eyebrow">ThÃ´ng tÆ° 02/2025/TT-BGDÄT</p>
+            <h1>Thiáº¿t káº¿ káº¿ hoáº¡ch tÃ­ch há»£p</h1>
+          </div>
+        </header>
+
+        <form id="plannerForm" class="planner-form">
+          <section class="panel">
+            <div class="panel-title-row">
+              <h2>ThÃ´ng tin bÃ i há»c</h2>
+              <button class="icon-button" type="button" id="resetButton" title="LÃ m má»›i" aria-label="LÃ m má»›i">â†º</button>
+            </div>
+
+            <label class="field">
+              <span>Cáº¥p há»c</span>
+              <select id="levelSelect"></select>
+            </label>
+
+            <div class="field-grid">
+              <label class="field">
+                <span>Lá»›p / Ä‘á»™ tuá»•i</span>
+                <select id="gradeSelect"></select>
+              </label>
+              <label class="field">
+                <span>Thá»i lÆ°á»£ng</span>
+                <select id="durationSelect">
+                  <option>35 phÃºt</option>
+                  <option selected>45 phÃºt</option>
+                  <option>2 tiáº¿t</option>
+                  <option>3 tiáº¿t</option>
+                  <option>Dá»± Ã¡n 1 tuáº§n</option>
+                </select>
+              </label>
+            </div>
+
+            <label class="field">
+              <span>MÃ´n há»c / hoáº¡t Ä‘á»™ng</span>
+              <select id="subjectSelect"></select>
+            </label>
+
+            <label class="field">
+              <span>Chá»§ Ä‘á» / bÃ i há»c</span>
+              <input id="topicInput" value="Báº£o tá»“n di sáº£n Ä‘á»‹a phÆ°Æ¡ng trong mÃ´i trÆ°á»ng sá»‘" />
+            </label>
+
+            <label class="field">
+              <span>Sáº£n pháº©m há»c táº­p</span>
+              <select id="productSelect">
+                <option>Phiáº¿u há»c táº­p</option>
+                <option selected>Poster sá»‘</option>
+                <option>Báº£n Ä‘á»“ tÆ° duy</option>
+                <option>BÃ i trÃ¬nh bÃ y</option>
+                <option>Video ngáº¯n</option>
+                <option>Dá»± Ã¡n truyá»n thÃ´ng</option>
+              </select>
+            </label>
+          </section>
+
+          <section class="panel">
+            <h2>Má»©c tÃ­ch há»£p</h2>
+            <div class="segmented" role="radiogroup" aria-label="Má»©c tÃ­ch há»£p">
+              <label><input type="radio" name="depth" value="Gá»£i má»Ÿ" /><span>Gá»£i má»Ÿ</span></label>
+              <label><input type="radio" name="depth" value="Lá»“ng ghÃ©p" checked /><span>Lá»“ng ghÃ©p</span></label>
+              <label><input type="radio" name="depth" value="ChuyÃªn Ä‘á»" /><span>ChuyÃªn Ä‘á»</span></label>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-title-row">
+              <h2>Miá»n NLS theo TT 02</h2>
+              <button class="icon-button" type="button" id="selectAllDomains" title="Chá»n táº¥t cáº£" aria-label="Chá»n táº¥t cáº£ miá»n NLS">âœ“</button>
+            </div>
+            <div id="domainList" class="check-list"></div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-title-row">
+              <h2>Ná»™i dung tÃ­ch há»£p</h2>
+              <button class="icon-button" type="button" id="selectAllIntegrations" title="Chá»n táº¥t cáº£" aria-label="Chá»n táº¥t cáº£ ná»™i dung tÃ­ch há»£p">âœ“</button>
+            </div>
+            <div id="integrationList" class="check-list"></div>
+          </section>
+
+          <section class="panel">
+            <h2>Äiá»u chá»‰nh hÃ²a nháº­p</h2>
+            <label class="field no-margin">
+              <span>Nhu cáº§u lá»›p há»c</span>
+              <textarea id="learnerNeedsInput" rows="4">CÃ³ há»c sinh cáº§n vÄƒn báº£n ngáº¯n gá»n, hÃ¬nh áº£nh minh há»a, nhiá»‡m vá»¥ chia bÆ°á»›c vÃ  thÃªm thá»i gian hoÃ n thÃ nh sáº£n pháº©m.</textarea>
+            </label>
+          </section>
+
+          <section class="panel">
+            <h2>Studio e-learning</h2>
+            <label class="field">
+              <span>Nháº­p bÃ i PowerPoint (.pptx)</span>
+              <input id="pptxInput" type="file" accept=".pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation" />
+            </label>
+            <div class="pptx-actions">
+              <button class="secondary-button" type="button" id="importPptxButton">Táº¡o bÃ i giáº£ng tá»« PPTX</button>
+              <span id="pptxStatus" class="mini-status">ChÆ°a chá»n file</span>
+            </div>
+            <label class="field">
+              <span>Kiá»ƒu bÃ i giáº£ng</span>
+              <select id="lessonModeSelect">
+                <option selected>Micro-learning tÆ°Æ¡ng tÃ¡c</option>
+                <option>Video bÃ i giáº£ng cÃ³ cÃ¢u há»i</option>
+                <option>MÃ´ phá»ng tÃ¬nh huá»‘ng</option>
+                <option>BÃ i luyá»‡n táº­p tá»± há»c</option>
+              </select>
+            </label>
+            <div class="field-grid">
+              <label class="field">
+                <span>Sá»‘ cáº£nh</span>
+                <select id="slideCountSelect">
+                  <option>5</option>
+                  <option selected>7</option>
+                  <option>9</option>
+                  <option>12</option>
+                </select>
+              </label>
+              <label class="field">
+                <span>Giá»ng dáº«n</span>
+                <select id="narrationStyleSelect">
+                  <option>Ngáº¯n gá»n</option>
+                  <option selected>ThÃ¢n thiá»‡n</option>
+                  <option>Gá»£i má»Ÿ</option>
+                  <option>Trang trá»ng</option>
+                </select>
+              </label>
+            </div>
+            <div class="check-list compact-checks">
+              <label class="check-item"><input type="checkbox" id="includeQuizInput" checked /><span><strong>CÃ¢u há»i tÆ°Æ¡ng tÃ¡c</strong><small>ChÃ¨n kiá»ƒm tra nhanh vÃ  pháº£n há»“i tá»± Ä‘á»™ng.</small></span></label>
+              <label class="check-item"><input type="checkbox" id="includeTranscriptInput" checked /><span><strong>Ká»‹ch báº£n thuyáº¿t minh</strong><small>Soáº¡n lá»i dáº«n cho tá»«ng cáº£nh Ä‘á»ƒ thu Ã¢m hoáº·c Ä‘á»c mÃ¡y.</small></span></label>
+            </div>
+          </section>
+
+          <section class="panel">
+            <h2>Cáº¥u hÃ¬nh tÆ°Æ¡ng tÃ¡c</h2>
+            <label class="field">
+              <span>Preset tÆ°Æ¡ng Ä‘Æ°Æ¡ng</span>
+              <select id="authoringPresetSelect">
+                <option value="activepresenter" selected>ActivePresenter-like</option>
+                <option value="ispring">iSpring Suite-like</option>
+                <option value="classroom">Lá»›p há»c tá»± há»c</option>
+              </select>
+            </label>
+            <div class="field-grid">
+              <label class="field">
+                <span>Chuáº©n xuáº¥t báº£n</span>
+                <select id="publishStandardSelect">
+                  <option selected>HTML5 offline</option>
+                  <option>SCORM 1.2</option>
+                  <option>SCORM 2004</option>
+                  <option>xAPI</option>
+                </select>
+              </label>
+              <label class="field">
+                <span>Äiá»ƒm Ä‘áº¡t</span>
+                <select id="passingScoreSelect">
+                  <option>60</option>
+                  <option selected>70</option>
+                  <option>80</option>
+                  <option>90</option>
+                </select>
+              </label>
+            </div>
+            <label class="field">
+              <span>Äiá»u kiá»‡n hoÃ n thÃ nh</span>
+              <select id="completionRuleSelect">
+                <option>Xem 80% sá»‘ cáº£nh</option>
+                <option selected>Äáº¡t Ä‘iá»ƒm quiz vÃ  xem 80% sá»‘ cáº£nh</option>
+                <option>HoÃ n thÃ nh táº¥t cáº£ cáº£nh</option>
+                <option>GiÃ¡o viÃªn xÃ¡c nháº­n</option>
+              </select>
+            </label>
+            <div class="field-grid">
+              <label class="field">
+                <span>Äiá»u hÆ°á»›ng</span>
+                <select id="navigationModeSelect">
+                  <option>Tá»± do</option>
+                  <option selected>Tuyáº¿n tÃ­nh cÃ³ má»¥c lá»¥c</option>
+                  <option>KhÃ³a cáº£nh Ä‘áº¿n khi hoÃ n thÃ nh</option>
+                </select>
+              </label>
+              <label class="field">
+                <span>Sá»‘ láº§n lÃ m quiz</span>
+                <select id="attemptLimitSelect">
+                  <option>1</option>
+                  <option selected>2</option>
+                  <option>3</option>
+                  <option>KhÃ´ng giá»›i háº¡n</option>
+                </select>
+              </label>
+            </div>
+            <div class="check-list compact-checks">
+              <label class="check-item"><input type="checkbox" id="shuffleAnswersInput" checked /><span><strong>XÃ¡o trá»™n Ä‘Ã¡p Ã¡n</strong><small>Giáº£m há»c thuá»™c vá»‹ trÃ­ Ä‘Ã¡p Ã¡n khi lÃ m láº¡i.</small></span></label>
+              <label class="check-item"><input type="checkbox" id="showFeedbackInput" checked /><span><strong>Pháº£n há»“i tá»©c thÃ¬</strong><small>Hiá»‡n gá»£i Ã½ Ä‘Ãºng/sai ngay sau khi tráº£ lá»i.</small></span></label>
+              <label class="check-item"><input type="checkbox" id="responsivePlayerInput" checked /><span><strong>Player responsive</strong><small>Tá»‘i Æ°u cho mÃ¡y tÃ­nh, mÃ¡y tÃ­nh báº£ng vÃ  Ä‘iá»‡n thoáº¡i.</small></span></label>
+            </div>
+          </section>
+
+          <div class="sticky-actions">
+            <button class="primary-button" type="submit">Táº¡o káº¿ hoáº¡ch</button>
+            <button class="secondary-button" type="button" id="saveButton">LÆ°u máº«u</button>
+            <button class="secondary-button" type="button" id="loadButton">Táº£i máº«u</button>
+          </div>
+        </form>
+      </aside>
+
+      <main class="workspace">
+        <header class="workspace-header">
+          <div>
+            <p class="eyebrow">App má»›i thay tháº¿ báº£n cÅ©</p>
+            <h2 id="pageTitle">Káº¿ hoáº¡ch bÃ i dáº¡y tÃ­ch há»£p</h2>
+            <p id="pageSubtitle" class="subtitle"></p>
+          </div>
+          <div class="header-actions">
+            <button class="utility-button is-hidden" id="installButton" type="button" hidden>CÃ i app</button>
+            <span class="status-badge" id="connectionBadge">Äang kiá»ƒm tra</span>
+            <button class="utility-button" id="copyButton" type="button">Sao chÃ©p</button>
+            <button class="utility-button" id="jsonButton" type="button">Xuáº¥t gÃ³i LMS</button>
+            <button class="utility-button" id="printButton" type="button">In / PDF</button>
+          </div>
+        </header>
+
+        <section class="metric-strip" aria-label="TÃ³m táº¯t cáº¥u hÃ¬nh">
+          <article><span>Báº­c NLS gá»£i Ã½</span><strong id="metricBand">-</strong></article>
+          <article><span>Miá»n NLS</span><strong id="metricDomains">-</strong></article>
+          <article><span>TÃ­ch há»£p</span><strong id="metricIntegrations">-</strong></article>
+          <article><span>Sáº£n pháº©m</span><strong id="metricProduct">-</strong></article>
+        </section>
+
+        <nav class="tabs" aria-label="Káº¿t quáº£">
+          <button class="tab is-active" type="button" data-tab="studio" data-surface="studio">TÃ¡c giáº£</button>
+          <button class="tab" type="button" data-tab="timeline" data-surface="studio">Timeline</button>
+          <button class="tab" type="button" data-tab="preview" data-surface="studio">Xem thá»­</button>
+          <button class="tab" type="button" data-tab="config" data-surface="both">Cáº¥u hÃ¬nh</button>
+          <button class="tab" type="button" data-tab="guide" data-surface="both">HÆ°á»›ng dáº«n</button>
+          <button class="tab" type="button" data-tab="matrix" data-surface="planner">Ma tráº­n</button>
+          <button class="tab" type="button" data-tab="plan" data-surface="planner">Káº¿ hoáº¡ch</button>
+          <button class="tab" type="button" data-tab="activities" data-surface="planner">Hoáº¡t Ä‘á»™ng</button>
+          <button class="tab" type="button" data-tab="assessment" data-surface="planner">ÄÃ¡nh giÃ¡</button>
+          <button class="tab" type="button" data-tab="ai" data-surface="planner">Prompt AI</button>
+          <button class="tab" type="button" data-tab="framework" data-surface="planner">Khung NLS</button>
+          <button class="tab" type="button" data-tab="library" data-surface="planner">Há»c liá»‡u</button>
+          <button class="tab" type="button" data-tab="skills" data-surface="planner">Skills</button>
+        </nav>
+
+        <section id="output" class="output" aria-live="polite"></section>
+      </main>
+    </div>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <script src="./skills.js?v=20260708-studio12"></script>
+    <script src="./app.js?v=20260708-studio12"></script>
+    <script src="./pwa.js?v=20260708-studio12"></script>
+  </body>
+</html>
+

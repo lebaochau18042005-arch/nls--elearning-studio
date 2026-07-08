@@ -1,0 +1,38 @@
+{
+  "name": "NLS E-Learning Studio",
+  "short_name": "NLS Studio",
+  "description": "Tạo bài giảng e-learning từ kế hoạch bài dạy tích hợp NLS theo TT 02/2025.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f8fbfd",
+  "theme_color": "#255c99",
+  "orientation": "any",
+  "lang": "vi",
+  "categories": [
+    "education",
+    "productivity"
+  ],
+  "icons": [
+    {
+      "src": "./assets/app-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Mở Studio",
+      "short_name": "Studio",
+      "url": "./index.html",
+      "description": "Mở nhanh màn hình tạo bài giảng e-learning."
+    },
+    {
+      "name": "Bộ skill",
+      "short_name": "Skills",
+      "url": "./index.html#skills",
+      "description": "Mở bộ skill hỗ trợ thiết kế bài học."
+    }
+  ]
+}

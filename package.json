@@ -1,0 +1,10 @@
+{
+  "name": "nls-elearning-studio",
+  "version": "0.12.0",
+  "private": true,
+  "description": "NLS E-Learning Studio with PPTX import, interactive authoring, LMS export and Google Gemini API route.",
+  "scripts": {
+    "start": "node local-server.js",
+    "check": "node --check app.js && node --check api/gemini.js && node --check local-server.js && node --check pwa.js && node --check service-worker.js"
+  }
+}
