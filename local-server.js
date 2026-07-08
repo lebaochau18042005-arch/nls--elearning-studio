@@ -33,7 +33,7 @@ const server = http.createServer((req, res) => {
   fs.readFile(fullPath, (error, data) => {
     if (error) {
       res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
-      res.end('Không tìm thấy file');
+      res.end('Kh�ng t�m th�y file');
       return;
     }
     res.writeHead(200, {
@@ -48,7 +48,7 @@ const server = http.createServer((req, res) => {
 
 server.listen(port, '127.0.0.1', () => {
   const url = 'http://127.0.0.1:' + port + '/';
-  console.log('NLS E-Learning Studio đang chạy tại ' + url);
+  console.log('NLS E-Learning Studio ang ch�y t�i ' + url);
   if (process.env.NLS_STUDIO_NO_OPEN !== '1') {
     exec('start "" "' + url + '"');
   }

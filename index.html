@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="vi">
   <head>
     <meta charset="utf-8" />
@@ -13,135 +13,135 @@
     <link rel="stylesheet" href="./styles.css?v=20260708-studio12" />
   </head>
   <body>
-    <div class="mode-switchbar" role="navigation" aria-label="Chá»n cháº¿ Ä‘á»™ lÃ m viá»‡c">
+    <div class="mode-switchbar" role="navigation" aria-label="Chọn chế ��" làm vi�!c">
       <div class="mode-title">
         <strong>NLS E-Learning Studio</strong>
-        <span>CÃ´ng cá»¥ táº¡o bÃ i giáº£ng tÆ°Æ¡ng tÃ¡c</span>
+        <span>Công cụ tạo bài giảng tương tác</span>
       </div>
-      <div class="mode-tabs" role="tablist" aria-label="Cháº¿ Ä‘á»™ app">
-        <button class="mode-tab is-active" type="button" data-app-mode="studio">Studio tÆ°Æ¡ng tÃ¡c</button>
-        <button class="mode-tab" type="button" data-app-mode="planner">Trá»£ lÃ½ bÃ i dáº¡y</button>
+      <div class="mode-tabs" role="tablist" aria-label="Chế ��" app">
+        <button class="mode-tab is-active" type="button" data-app-mode="studio">Studio tương tác</button>
+        <button class="mode-tab" type="button" data-app-mode="planner">Trợ lý bài dạy</button>
       </div>
     </div>
     <div class="app-shell">
-      <aside class="sidebar" aria-label="Cáº¥u hÃ¬nh káº¿ hoáº¡ch">
+      <aside class="sidebar" aria-label="Cấu hình kế hoạch">
         <header class="brand-block">
           <div class="brand-mark" aria-hidden="true">
             <span>NLS</span>
           </div>
           <div>
-            <p class="eyebrow">ThÃ´ng tÆ° 02/2025/TT-BGDÄT</p>
-            <h1>Thiáº¿t káº¿ káº¿ hoáº¡ch tÃ­ch há»£p</h1>
+            <p class="eyebrow">Thông tư 02/2025/TT-BGDĐT</p>
+            <h1>Thiết kế kế hoạch tích hợp</h1>
           </div>
         </header>
 
         <form id="plannerForm" class="planner-form">
           <section class="panel">
             <div class="panel-title-row">
-              <h2>ThÃ´ng tin bÃ i há»c</h2>
-              <button class="icon-button" type="button" id="resetButton" title="LÃ m má»›i" aria-label="LÃ m má»›i">â†º</button>
+              <h2>Thông tin bài học</h2>
+              <button class="icon-button" type="button" id="resetButton" title="Làm m�:i" aria-label="Làm m�:i">� �</button>
             </div>
 
             <label class="field">
-              <span>Cáº¥p há»c</span>
+              <span>Cấp học</span>
               <select id="levelSelect"></select>
             </label>
 
             <div class="field-grid">
               <label class="field">
-                <span>Lá»›p / Ä‘á»™ tuá»•i</span>
+                <span>L�:p / ��" tu�"i</span>
                 <select id="gradeSelect"></select>
               </label>
               <label class="field">
-                <span>Thá»i lÆ°á»£ng</span>
+                <span>Thời lượng</span>
                 <select id="durationSelect">
-                  <option>35 phÃºt</option>
-                  <option selected>45 phÃºt</option>
-                  <option>2 tiáº¿t</option>
-                  <option>3 tiáº¿t</option>
-                  <option>Dá»± Ã¡n 1 tuáº§n</option>
+                  <option>35 phút</option>
+                  <option selected>45 phút</option>
+                  <option>2 tiết</option>
+                  <option>3 tiết</option>
+                  <option>Dự án 1 tuần</option>
                 </select>
               </label>
             </div>
 
             <label class="field">
-              <span>MÃ´n há»c / hoáº¡t Ä‘á»™ng</span>
+              <span>Môn học / hoạt ��"ng</span>
               <select id="subjectSelect"></select>
             </label>
 
             <label class="field">
-              <span>Chá»§ Ä‘á» / bÃ i há»c</span>
-              <input id="topicInput" value="Báº£o tá»“n di sáº£n Ä‘á»‹a phÆ°Æ¡ng trong mÃ´i trÆ°á»ng sá»‘" />
+              <span>Chủ �ề / bài học</span>
+              <input id="topicInput" value="Bảo t�n di sản ��9a phương trong môi trường s�" />
             </label>
 
             <label class="field">
-              <span>Sáº£n pháº©m há»c táº­p</span>
+              <span>Sản phẩm học tập</span>
               <select id="productSelect">
-                <option>Phiáº¿u há»c táº­p</option>
-                <option selected>Poster sá»‘</option>
-                <option>Báº£n Ä‘á»“ tÆ° duy</option>
-                <option>BÃ i trÃ¬nh bÃ y</option>
-                <option>Video ngáº¯n</option>
-                <option>Dá»± Ã¡n truyá»n thÃ´ng</option>
+                <option>Phiếu học tập</option>
+                <option selected>Poster s�</option>
+                <option>Bản �� tư duy</option>
+                <option>Bài trình bày</option>
+                <option>Video ngắn</option>
+                <option>Dự án truyền thông</option>
               </select>
             </label>
           </section>
 
           <section class="panel">
-            <h2>Má»©c tÃ­ch há»£p</h2>
-            <div class="segmented" role="radiogroup" aria-label="Má»©c tÃ­ch há»£p">
-              <label><input type="radio" name="depth" value="Gá»£i má»Ÿ" /><span>Gá»£i má»Ÿ</span></label>
-              <label><input type="radio" name="depth" value="Lá»“ng ghÃ©p" checked /><span>Lá»“ng ghÃ©p</span></label>
-              <label><input type="radio" name="depth" value="ChuyÃªn Ä‘á»" /><span>ChuyÃªn Ä‘á»</span></label>
+            <h2>Mức tích hợp</h2>
+            <div class="segmented" role="radiogroup" aria-label="Mức tích hợp">
+              <label><input type="radio" name="depth" value="Gợi m�x" /><span>Gợi m�x</span></label>
+              <label><input type="radio" name="depth" value="L�ng ghép" checked /><span>L�ng ghép</span></label>
+              <label><input type="radio" name="depth" value="Chuyên �ề" /><span>Chuyên �ề</span></label>
             </div>
           </section>
 
           <section class="panel">
             <div class="panel-title-row">
-              <h2>Miá»n NLS theo TT 02</h2>
-              <button class="icon-button" type="button" id="selectAllDomains" title="Chá»n táº¥t cáº£" aria-label="Chá»n táº¥t cáº£ miá»n NLS">âœ“</button>
+              <h2>Miền NLS theo TT 02</h2>
+              <button class="icon-button" type="button" id="selectAllDomains" title="Chọn tất cả" aria-label="Chọn tất cả miền NLS">�S</button>
             </div>
             <div id="domainList" class="check-list"></div>
           </section>
 
           <section class="panel">
             <div class="panel-title-row">
-              <h2>Ná»™i dung tÃ­ch há»£p</h2>
-              <button class="icon-button" type="button" id="selectAllIntegrations" title="Chá»n táº¥t cáº£" aria-label="Chá»n táº¥t cáº£ ná»™i dung tÃ­ch há»£p">âœ“</button>
+              <h2>N�"i dung tích hợp</h2>
+              <button class="icon-button" type="button" id="selectAllIntegrations" title="Chọn tất cả" aria-label="Chọn tất cả n�"i dung tích hợp">�S</button>
             </div>
             <div id="integrationList" class="check-list"></div>
           </section>
 
           <section class="panel">
-            <h2>Äiá»u chá»‰nh hÃ²a nháº­p</h2>
+            <h2>Điều ch�0nh hòa nhập</h2>
             <label class="field no-margin">
-              <span>Nhu cáº§u lá»›p há»c</span>
-              <textarea id="learnerNeedsInput" rows="4">CÃ³ há»c sinh cáº§n vÄƒn báº£n ngáº¯n gá»n, hÃ¬nh áº£nh minh há»a, nhiá»‡m vá»¥ chia bÆ°á»›c vÃ  thÃªm thá»i gian hoÃ n thÃ nh sáº£n pháº©m.</textarea>
+              <span>Nhu cầu l�:p học</span>
+              <textarea id="learnerNeedsInput" rows="4">Có học sinh cần vĒn bản ngắn gọn, hình ảnh minh họa, nhi�!m vụ chia bư�:c và thêm thời gian hoàn thành sản phẩm.</textarea>
             </label>
           </section>
 
           <section class="panel">
             <h2>Studio e-learning</h2>
             <label class="field">
-              <span>Nháº­p bÃ i PowerPoint (.pptx)</span>
+              <span>Nhập bài PowerPoint (.pptx)</span>
               <input id="pptxInput" type="file" accept=".pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation" />
             </label>
             <div class="pptx-actions">
-              <button class="secondary-button" type="button" id="importPptxButton">Táº¡o bÃ i giáº£ng tá»« PPTX</button>
-              <span id="pptxStatus" class="mini-status">ChÆ°a chá»n file</span>
+              <button class="secondary-button" type="button" id="importPptxButton">Tạo bài giảng từ PPTX</button>
+              <span id="pptxStatus" class="mini-status">Chưa chọn file</span>
             </div>
             <label class="field">
-              <span>Kiá»ƒu bÃ i giáº£ng</span>
+              <span>KiỒu bài giảng</span>
               <select id="lessonModeSelect">
-                <option selected>Micro-learning tÆ°Æ¡ng tÃ¡c</option>
-                <option>Video bÃ i giáº£ng cÃ³ cÃ¢u há»i</option>
-                <option>MÃ´ phá»ng tÃ¬nh huá»‘ng</option>
-                <option>BÃ i luyá»‡n táº­p tá»± há»c</option>
+                <option selected>Micro-learning tương tác</option>
+                <option>Video bài giảng có câu hỏi</option>
+                <option>Mô phỏng tình hu�ng</option>
+                <option>Bài luy�!n tập tự học</option>
               </select>
             </label>
             <div class="field-grid">
               <label class="field">
-                <span>Sá»‘ cáº£nh</span>
+                <span>S� cảnh</span>
                 <select id="slideCountSelect">
                   <option>5</option>
                   <option selected>7</option>
@@ -150,34 +150,34 @@
                 </select>
               </label>
               <label class="field">
-                <span>Giá»ng dáº«n</span>
+                <span>Giọng dẫn</span>
                 <select id="narrationStyleSelect">
-                  <option>Ngáº¯n gá»n</option>
-                  <option selected>ThÃ¢n thiá»‡n</option>
-                  <option>Gá»£i má»Ÿ</option>
-                  <option>Trang trá»ng</option>
+                  <option>Ngắn gọn</option>
+                  <option selected>Thân thi�!n</option>
+                  <option>Gợi m�x</option>
+                  <option>Trang trọng</option>
                 </select>
               </label>
             </div>
             <div class="check-list compact-checks">
-              <label class="check-item"><input type="checkbox" id="includeQuizInput" checked /><span><strong>CÃ¢u há»i tÆ°Æ¡ng tÃ¡c</strong><small>ChÃ¨n kiá»ƒm tra nhanh vÃ  pháº£n há»“i tá»± Ä‘á»™ng.</small></span></label>
-              <label class="check-item"><input type="checkbox" id="includeTranscriptInput" checked /><span><strong>Ká»‹ch báº£n thuyáº¿t minh</strong><small>Soáº¡n lá»i dáº«n cho tá»«ng cáº£nh Ä‘á»ƒ thu Ã¢m hoáº·c Ä‘á»c mÃ¡y.</small></span></label>
+              <label class="check-item"><input type="checkbox" id="includeQuizInput" checked /><span><strong>Câu hỏi tương tác</strong><small>Chèn kiỒm tra nhanh và phản h�i tự ��"ng.</small></span></label>
+              <label class="check-item"><input type="checkbox" id="includeTranscriptInput" checked /><span><strong>K�9ch bản thuyết minh</strong><small>Soạn lời dẫn cho từng cảnh �Ồ thu âm hoặc �ọc máy.</small></span></label>
             </div>
           </section>
 
           <section class="panel">
-            <h2>Cáº¥u hÃ¬nh tÆ°Æ¡ng tÃ¡c</h2>
+            <h2>Cấu hình tương tác</h2>
             <label class="field">
-              <span>Preset tÆ°Æ¡ng Ä‘Æ°Æ¡ng</span>
+              <span>Preset tương �ương</span>
               <select id="authoringPresetSelect">
                 <option value="activepresenter" selected>ActivePresenter-like</option>
                 <option value="ispring">iSpring Suite-like</option>
-                <option value="classroom">Lá»›p há»c tá»± há»c</option>
+                <option value="classroom">L�:p học tự học</option>
               </select>
             </label>
             <div class="field-grid">
               <label class="field">
-                <span>Chuáº©n xuáº¥t báº£n</span>
+                <span>Chuẩn xuất bản</span>
                 <select id="publishStandardSelect">
                   <option selected>HTML5 offline</option>
                   <option>SCORM 1.2</option>
@@ -186,7 +186,7 @@
                 </select>
               </label>
               <label class="field">
-                <span>Äiá»ƒm Ä‘áº¡t</span>
+                <span>ĐiỒm �ạt</span>
                 <select id="passingScoreSelect">
                   <option>60</option>
                   <option selected>70</option>
@@ -196,44 +196,44 @@
               </label>
             </div>
             <label class="field">
-              <span>Äiá»u kiá»‡n hoÃ n thÃ nh</span>
+              <span>Điều ki�!n hoàn thành</span>
               <select id="completionRuleSelect">
-                <option>Xem 80% sá»‘ cáº£nh</option>
-                <option selected>Äáº¡t Ä‘iá»ƒm quiz vÃ  xem 80% sá»‘ cáº£nh</option>
-                <option>HoÃ n thÃ nh táº¥t cáº£ cáº£nh</option>
-                <option>GiÃ¡o viÃªn xÃ¡c nháº­n</option>
+                <option>Xem 80% s� cảnh</option>
+                <option selected>Đạt �iỒm quiz và xem 80% s� cảnh</option>
+                <option>Hoàn thành tất cả cảnh</option>
+                <option>Giáo viên xác nhận</option>
               </select>
             </label>
             <div class="field-grid">
               <label class="field">
-                <span>Äiá»u hÆ°á»›ng</span>
+                <span>Điều hư�:ng</span>
                 <select id="navigationModeSelect">
-                  <option>Tá»± do</option>
-                  <option selected>Tuyáº¿n tÃ­nh cÃ³ má»¥c lá»¥c</option>
-                  <option>KhÃ³a cáº£nh Ä‘áº¿n khi hoÃ n thÃ nh</option>
+                  <option>Tự do</option>
+                  <option selected>Tuyến tính có mục lục</option>
+                  <option>Khóa cảnh �ến khi hoàn thành</option>
                 </select>
               </label>
               <label class="field">
-                <span>Sá»‘ láº§n lÃ m quiz</span>
+                <span>S� lần làm quiz</span>
                 <select id="attemptLimitSelect">
                   <option>1</option>
                   <option selected>2</option>
                   <option>3</option>
-                  <option>KhÃ´ng giá»›i háº¡n</option>
+                  <option>Không gi�:i hạn</option>
                 </select>
               </label>
             </div>
             <div class="check-list compact-checks">
-              <label class="check-item"><input type="checkbox" id="shuffleAnswersInput" checked /><span><strong>XÃ¡o trá»™n Ä‘Ã¡p Ã¡n</strong><small>Giáº£m há»c thuá»™c vá»‹ trÃ­ Ä‘Ã¡p Ã¡n khi lÃ m láº¡i.</small></span></label>
-              <label class="check-item"><input type="checkbox" id="showFeedbackInput" checked /><span><strong>Pháº£n há»“i tá»©c thÃ¬</strong><small>Hiá»‡n gá»£i Ã½ Ä‘Ãºng/sai ngay sau khi tráº£ lá»i.</small></span></label>
-              <label class="check-item"><input type="checkbox" id="responsivePlayerInput" checked /><span><strong>Player responsive</strong><small>Tá»‘i Æ°u cho mÃ¡y tÃ­nh, mÃ¡y tÃ­nh báº£ng vÃ  Ä‘iá»‡n thoáº¡i.</small></span></label>
+              <label class="check-item"><input type="checkbox" id="shuffleAnswersInput" checked /><span><strong>Xáo tr�"n �áp án</strong><small>Giảm học thu�"c v�9 trí �áp án khi làm lại.</small></span></label>
+              <label class="check-item"><input type="checkbox" id="showFeedbackInput" checked /><span><strong>Phản h�i tức thì</strong><small>Hi�!n gợi ý �úng/sai ngay sau khi trả lời.</small></span></label>
+              <label class="check-item"><input type="checkbox" id="responsivePlayerInput" checked /><span><strong>Player responsive</strong><small>T�i ưu cho máy tính, máy tính bảng và �i�!n thoại.</small></span></label>
             </div>
           </section>
 
           <div class="sticky-actions">
-            <button class="primary-button" type="submit">Táº¡o káº¿ hoáº¡ch</button>
-            <button class="secondary-button" type="button" id="saveButton">LÆ°u máº«u</button>
-            <button class="secondary-button" type="button" id="loadButton">Táº£i máº«u</button>
+            <button class="primary-button" type="submit">Tạo kế hoạch</button>
+            <button class="secondary-button" type="button" id="saveButton">Lưu mẫu</button>
+            <button class="secondary-button" type="button" id="loadButton">Tải mẫu</button>
           </div>
         </form>
       </aside>
@@ -241,39 +241,39 @@
       <main class="workspace">
         <header class="workspace-header">
           <div>
-            <p class="eyebrow">App má»›i thay tháº¿ báº£n cÅ©</p>
-            <h2 id="pageTitle">Káº¿ hoáº¡ch bÃ i dáº¡y tÃ­ch há»£p</h2>
+            <p class="eyebrow">App m�:i thay thế bản cũ</p>
+            <h2 id="pageTitle">Kế hoạch bài dạy tích hợp</h2>
             <p id="pageSubtitle" class="subtitle"></p>
           </div>
           <div class="header-actions">
-            <button class="utility-button is-hidden" id="installButton" type="button" hidden>CÃ i app</button>
-            <span class="status-badge" id="connectionBadge">Äang kiá»ƒm tra</span>
-            <button class="utility-button" id="copyButton" type="button">Sao chÃ©p</button>
-            <button class="utility-button" id="jsonButton" type="button">Xuáº¥t gÃ³i LMS</button>
+            <button class="utility-button is-hidden" id="installButton" type="button" hidden>Cài app</button>
+            <span class="status-badge" id="connectionBadge">Đang kiỒm tra</span>
+            <button class="utility-button" id="copyButton" type="button">Sao chép</button>
+            <button class="utility-button" id="jsonButton" type="button">Xuất gói LMS</button>
             <button class="utility-button" id="printButton" type="button">In / PDF</button>
           </div>
         </header>
 
-        <section class="metric-strip" aria-label="TÃ³m táº¯t cáº¥u hÃ¬nh">
-          <article><span>Báº­c NLS gá»£i Ã½</span><strong id="metricBand">-</strong></article>
-          <article><span>Miá»n NLS</span><strong id="metricDomains">-</strong></article>
-          <article><span>TÃ­ch há»£p</span><strong id="metricIntegrations">-</strong></article>
-          <article><span>Sáº£n pháº©m</span><strong id="metricProduct">-</strong></article>
+        <section class="metric-strip" aria-label="Tóm tắt cấu hình">
+          <article><span>Bậc NLS gợi ý</span><strong id="metricBand">-</strong></article>
+          <article><span>Miền NLS</span><strong id="metricDomains">-</strong></article>
+          <article><span>Tích hợp</span><strong id="metricIntegrations">-</strong></article>
+          <article><span>Sản phẩm</span><strong id="metricProduct">-</strong></article>
         </section>
 
-        <nav class="tabs" aria-label="Káº¿t quáº£">
-          <button class="tab is-active" type="button" data-tab="studio" data-surface="studio">TÃ¡c giáº£</button>
+        <nav class="tabs" aria-label="Kết quả">
+          <button class="tab is-active" type="button" data-tab="studio" data-surface="studio">Tác giả</button>
           <button class="tab" type="button" data-tab="timeline" data-surface="studio">Timeline</button>
-          <button class="tab" type="button" data-tab="preview" data-surface="studio">Xem thá»­</button>
-          <button class="tab" type="button" data-tab="config" data-surface="both">Cáº¥u hÃ¬nh</button>
-          <button class="tab" type="button" data-tab="guide" data-surface="both">HÆ°á»›ng dáº«n</button>
-          <button class="tab" type="button" data-tab="matrix" data-surface="planner">Ma tráº­n</button>
-          <button class="tab" type="button" data-tab="plan" data-surface="planner">Káº¿ hoáº¡ch</button>
-          <button class="tab" type="button" data-tab="activities" data-surface="planner">Hoáº¡t Ä‘á»™ng</button>
-          <button class="tab" type="button" data-tab="assessment" data-surface="planner">ÄÃ¡nh giÃ¡</button>
+          <button class="tab" type="button" data-tab="preview" data-surface="studio">Xem thử</button>
+          <button class="tab" type="button" data-tab="config" data-surface="both">Cấu hình</button>
+          <button class="tab" type="button" data-tab="guide" data-surface="both">Hư�:ng dẫn</button>
+          <button class="tab" type="button" data-tab="matrix" data-surface="planner">Ma trận</button>
+          <button class="tab" type="button" data-tab="plan" data-surface="planner">Kế hoạch</button>
+          <button class="tab" type="button" data-tab="activities" data-surface="planner">Hoạt ��"ng</button>
+          <button class="tab" type="button" data-tab="assessment" data-surface="planner">Đánh giá</button>
           <button class="tab" type="button" data-tab="ai" data-surface="planner">Prompt AI</button>
           <button class="tab" type="button" data-tab="framework" data-surface="planner">Khung NLS</button>
-          <button class="tab" type="button" data-tab="library" data-surface="planner">Há»c liá»‡u</button>
+          <button class="tab" type="button" data-tab="library" data-surface="planner">Học li�!u</button>
           <button class="tab" type="button" data-tab="skills" data-surface="planner">Skills</button>
         </nav>
 

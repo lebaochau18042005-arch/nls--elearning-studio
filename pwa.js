@@ -1,4 +1,4 @@
-﻿(function() {
+(function() {
   const installButton = document.getElementById('installButton');
   const statusBadge = document.getElementById('connectionBadge');
   let deferredInstallPrompt = null;
@@ -10,16 +10,16 @@
   function setStatus() {
     if (!statusBadge) return;
     if (location.protocol === 'file:') {
-      statusBadge.textContent = 'Cháº¡y trá»±c tiáº¿p trÃªn mÃ¡y';
+      statusBadge.textContent = 'Chạy trực tiếp trên máy';
       statusBadge.className = 'status-badge local';
       return;
     }
     if (!navigator.onLine) {
-      statusBadge.textContent = 'Äang dÃ¹ng offline';
+      statusBadge.textContent = 'Đang dùng offline';
       statusBadge.className = 'status-badge offline';
       return;
     }
-    statusBadge.textContent = canUseServiceWorker() ? 'Sáºµn sÃ ng cÃ i/offline' : 'Äang cháº¡y trÃªn web';
+    statusBadge.textContent = canUseServiceWorker() ? 'Sẵn sàng cài/offline' : 'Đang chạy trên web';
     statusBadge.className = 'status-badge online';
   }
 
@@ -40,7 +40,7 @@
       setStatus();
     } catch (error) {
       if (statusBadge) {
-        statusBadge.textContent = 'KhÃ´ng báº­t Ä‘Æ°á»£c offline';
+        statusBadge.textContent = 'Không bật �ược offline';
         statusBadge.className = 'status-badge offline';
       }
     }
