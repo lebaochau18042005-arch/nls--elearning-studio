@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nls-elearning-studio-v16-pptx-content';
+const CACHE_NAME = 'nls-elearning-studio-v17-pptx-media';
 const APP_SHELL = [
   './',
   './index.html',

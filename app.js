@@ -1489,13 +1489,17 @@ function renderSceneContent(scene) {
 }
 
 function renderSceneMedia(scene) {
+  const images = Array.isArray(scene.images) ? scene.images.filter(function(image) { return image && image.dataUrl; }) : [];
   const visual = String(scene.visual || '').trim();
-  if (!visual) return '';
+  const imageHtml = images.length ? '<div class="canvas-media-grid">' + images.map(function(image) {
+    return '<figure><img src="' + esc(image.dataUrl) + '" alt="' + esc(image.alt || image.name || 'Ảnh từ PowerPoint') + '" /><figcaption>' + esc(image.name || 'Ảnh PPTX') + '</figcaption></figure>';
+  }).join('') + '</div>' : '';
+  if (!visual) return imageHtml;
   const isPptxSource = visual.indexOf('Nguồn PPTX:') === 0 || visual.indexOf('Nguon PPTX:') === 0;
   if (isPptxSource) {
-    return '<p class="pptx-source-note">' + esc(visual) + '<br><small>App đã nhập phần chữ từ PowerPoint. Hình ảnh/hiệu ứng gốc cần bổ sung lại trong tab Thêm nếu cần.</small></p>';
+    return imageHtml + '<p class="pptx-source-note">' + esc(visual) + '<br><small>App đã nhập chữ và ảnh chính từ PowerPoint. Hiệu ứng gốc được chuyển sang hiệu ứng tương đương trong tab Chuyển tiếp.</small></p>';
   }
-  return '<div class="canvas-media">' + esc(visual) + '</div>';
+  return imageHtml + '<div class="canvas-media">' + esc(visual) + '</div>';
 }
 
 function renderSceneObjects(scene) {
@@ -2698,6 +2702,7 @@ async function importPptxLesson(inputEl, statusEl) {
 async function readPptxSlides(file) {
   const bytes = new Uint8Array(await file.arrayBuffer());
   const entries = readZipCentralDirectory(bytes);
+  const entryMap = zipEntryMap(entries);
   const slideEntries = entries
     .filter(function(entry) { return /^ppt\/slides\/slide\d+\.xml$/i.test(entry.name); })
     .sort(function(a, b) { return slideNumber(a.name) - slideNumber(b.name); });
@@ -2708,15 +2713,117 @@ async function readPptxSlides(file) {
     const xml = new TextDecoder('utf-8').decode(xmlBytes);
     const texts = extractPptxTexts(xml);
     const cleanTexts = texts.map(cleanSlideText).filter(Boolean);
-    if (!cleanTexts.length) continue;
+    const rels = await readPptxRelationships(bytes, entryMap, entry.name);
+    const imageIds = extractPptxImageRelIds(xml);
+    const images = await readPptxImages(bytes, entryMap, entry.name, rels, imageIds);
+    const transition = extractPptxTransition(xml);
+    if (!cleanTexts.length && !images.length) continue;
     slides.push({
       number: slideNumber(entry.name),
-      title: cleanTexts[0],
+      title: cleanTexts[0] || ('Slide ' + slideNumber(entry.name)),
       bullets: cleanTexts.slice(1),
-      rawText: cleanTexts.join('\n')
+      rawText: cleanTexts.join('\n'),
+      images: images,
+      transition: transition
     });
   }
   return slides;
+}
+
+function zipEntryMap(entries) {
+  const map = {};
+  entries.forEach(function(entry) {
+    map[String(entry.name || '').toLowerCase()] = entry;
+  });
+  return map;
+}
+
+async function readPptxRelationships(bytes, entryMap, slidePath) {
+  const fileName = slidePath.split('/').pop();
+  const relPath = slidePath.replace(/\/[^/]+$/, '/_rels/' + fileName + '.rels').toLowerCase();
+  const entry = entryMap[relPath];
+  if (!entry) return {};
+  const xmlBytes = await unzipEntry(bytes, entry);
+  const xml = new TextDecoder('utf-8').decode(xmlBytes);
+  const doc = new DOMParser().parseFromString(xml, 'application/xml');
+  const rels = {};
+  Array.from(doc.getElementsByTagName('Relationship')).forEach(function(node) {
+    const id = node.getAttribute('Id');
+    const target = node.getAttribute('Target');
+    if (id && target) rels[id] = target;
+  });
+  return rels;
+}
+
+function extractPptxImageRelIds(xml) {
+  const doc = new DOMParser().parseFromString(xml, 'application/xml');
+  const nodes = Array.from(doc.getElementsByTagName('a:blip')).concat(Array.from(doc.getElementsByTagName('blip')));
+  const seen = {};
+  return nodes.map(function(node) {
+    return node.getAttribute('r:embed') || node.getAttribute('embed') || node.getAttribute('r:link') || node.getAttribute('link') || '';
+  }).filter(function(id) {
+    if (!id || seen[id]) return false;
+    seen[id] = true;
+    return true;
+  });
+}
+
+async function readPptxImages(bytes, entryMap, slidePath, rels, imageIds) {
+  const images = [];
+  for (let index = 0; index < imageIds.length && images.length < 3; index += 1) {
+    const relId = imageIds[index];
+    const target = rels[relId];
+    if (!target || /^https?:\/\//i.test(target)) continue;
+    const imagePath = resolveZipPath(slidePath, target);
+    const entry = entryMap[imagePath.toLowerCase()];
+    if (!entry) continue;
+    const data = await unzipEntry(bytes, entry);
+    if (data.length > 2500000) continue;
+    const name = imagePath.split('/').pop() || ('image-' + (images.length + 1));
+    const mime = mimeFromPath(name);
+    if (mime.indexOf('image/') !== 0) continue;
+    images.push({
+      name: name,
+      mime: mime,
+      dataUrl: 'data:' + mime + ';base64,' + bytesToBase64(data),
+      alt: 'Ảnh từ PowerPoint'
+    });
+  }
+  return images;
+}
+
+function resolveZipPath(fromPath, target) {
+  if (!target) return '';
+  if (target.charAt(0) === '/') return target.replace(/^\/+/, '');
+  const parts = fromPath.split('/');
+  parts.pop();
+  target.split('/').forEach(function(part) {
+    if (!part || part === '.') return;
+    if (part === '..') parts.pop();
+    else parts.push(part);
+  });
+  return parts.join('/');
+}
+
+function mimeFromPath(path) {
+  const ext = String(path || '').split('.').pop().toLowerCase();
+  if (ext === 'jpg' || ext === 'jpeg') return 'image/jpeg';
+  if (ext === 'png') return 'image/png';
+  if (ext === 'gif') return 'image/gif';
+  if (ext === 'webp') return 'image/webp';
+  if (ext === 'svg') return 'image/svg+xml';
+  if (ext === 'bmp') return 'image/bmp';
+  return 'application/octet-stream';
+}
+
+function bytesToBase64(bytes) {
+  let binary = '';
+  const chunkSize = 0x8000;
+  for (let index = 0; index < bytes.length; index += chunkSize) {
+    const chunk = bytes.subarray(index, index + chunkSize);
+    binary += String.fromCharCode.apply(null, chunk);
+  }
+  return btoa(binary);
 }
 
 function readZipCentralDirectory(bytes) {
@@ -2785,6 +2892,54 @@ function extractPptxTexts(xml) {
   return nodes.map(function(node) { return node.textContent || ''; });
 }
 
+function extractPptxTransition(xml) {
+  const doc = new DOMParser().parseFromString(xml, 'application/xml');
+  const transition = doc.getElementsByTagName('p:transition')[0] || doc.getElementsByTagName('transition')[0];
+  if (!transition) return null;
+  const child = Array.from(transition.children || []).find(function(node) {
+    const name = pptxLocalName(node);
+    return name && name !== 'sndAc' && name !== 'extLst';
+  });
+  const name = child ? pptxLocalName(child) : '';
+  const map = {
+    fade: 'fade',
+    push: 'push',
+    wipe: 'wipe',
+    cover: 'cover',
+    pull: 'uncover',
+    uncover: 'uncover',
+    split: 'split',
+    randomBar: 'bars',
+    randomBars: 'bars',
+    blinds: 'bars',
+    checker: 'bars',
+    circle: 'reveal',
+    diamond: 'reveal',
+    dissolve: 'fade'
+  };
+  const key = map[name] || 'fade';
+  return {
+    key: key,
+    effect: TRANSITION_EFFECTS[key] ? TRANSITION_EFFECTS[key].effect : 'Fade',
+    direction: transition.getAttribute('dir') || (child && child.getAttribute('dir')) || 'auto',
+    duration: transition.getAttribute('spd') === 'slow' ? 1.1 : (transition.getAttribute('spd') === 'fast' ? 0.45 : 0.7)
+  };
+}
+
+function pptxLocalName(node) {
+  return String(node.localName || node.nodeName || '').replace(/^.*:/, '');
+}
+
+function normalizeTransitionDirection(value) {
+  const dir = String(value || '').toLowerCase();
+  if (dir === 'l' || dir === 'left') return 'left';
+  if (dir === 'r' || dir === 'right') return 'right';
+  if (dir === 'u' || dir === 'up') return 'up';
+  if (dir === 'd' || dir === 'down') return 'down';
+  if (dir === 'in' || dir === 'out' || dir === 'center') return 'center';
+  return 'auto';
+}
+
 function cleanSlideText(text) {
   return String(text || '').replace(/\s+/g, ' ').trim();
 }
@@ -2815,8 +2970,14 @@ function applySlidesToLesson(slides, filename) {
       content: content.slice(0, 520),
       bullets: slide.bullets.slice(0, 12),
       rawText: text,
+      images: slide.images || [],
       narration: narrationLine('Trình bày nội dung slide ' + slide.number + ': ' + text.slice(0, 220), state.plan),
       visual: 'Nguồn PPTX: ' + filename + ' - slide ' + slide.number,
+      transition: slide.transition ? slide.transition.effect : (index ? 'Fade' : 'None'),
+      transitionKey: slide.transition ? slide.transition.key : (index ? 'fade' : 'none'),
+      transitionDirection: slide.transition ? normalizeTransitionDirection(slide.transition.direction) : 'auto',
+      transitionEffectDuration: slide.transition ? slide.transition.duration : 0.7,
+      autoAdvance: true,
       duration: Math.max(45, Math.min(120, 25 + Math.ceil(text.length / 8)))
     };
   });
@@ -3322,7 +3483,7 @@ function buildCoursePlayerCss() {
     '*{box-sizing:border-box}body{margin:0;background:#f5f8fb;color:var(--ink)}button{font:inherit;cursor:pointer}.course-app{min-height:100vh;display:grid;grid-template-rows:auto 1fr auto}',
     '.course-header{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;padding:18px 22px;background:#fff;border-bottom:1px solid var(--line)}.course-header h1{margin:0 0 6px;font-size:1.35rem;line-height:1.25}.course-header p{margin:0;color:var(--muted);line-height:1.45}.badge{display:inline-flex;align-items:center;min-height:30px;border:1px solid var(--line);border-radius:6px;padding:0 10px;background:#eef6f5;color:var(--teal);font-weight:800;white-space:nowrap}',
     '.stage{display:grid;grid-template-columns:minmax(210px,280px) minmax(0,1fr);gap:18px;padding:18px}.toc{display:grid;gap:8px;align-content:start}.toc button{border:1px solid var(--line);background:#fff;border-radius:8px;padding:10px;text-align:left;color:var(--ink)}.toc button[aria-current=true]{border-color:var(--teal);box-shadow:0 0 0 3px rgba(15,118,110,.14)}.toc strong{display:block}.toc small{color:var(--muted)}',
-    '.slide{min-height:520px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:28px;display:grid;align-content:start;gap:16px}.slide-top{display:flex;justify-content:space-between;color:var(--muted);font-weight:800}.slide h2{margin:0;font-size:clamp(1.6rem,4vw,3rem);line-height:1.12}.slide p{font-size:1.05rem;line-height:1.65;margin:0}.media{border:1px dashed #b8c6d2;background:#f7fafc;border-radius:8px;padding:18px;color:var(--muted);line-height:1.5}.script{font-size:.95rem;color:#475569;background:#f8fafc;border-left:4px solid var(--blue);padding:12px}',
+    '.slide{min-height:520px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:28px;display:grid;align-content:start;gap:16px}.slide-top{display:flex;justify-content:space-between;color:var(--muted);font-weight:800}.slide h2{margin:0;font-size:clamp(1.6rem,4vw,3rem);line-height:1.12}.slide p{font-size:1.05rem;line-height:1.65;margin:0}.slide-content{display:grid;gap:8px;font-size:1.04rem;line-height:1.55}.slide-content ul{margin:0;padding-left:1.25rem;display:grid;gap:6px}.media{border:1px dashed #b8c6d2;background:#f7fafc;border-radius:8px;padding:14px;color:var(--muted);line-height:1.5}.media-note{font-size:.86rem}.slide-media-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}.slide-media-grid figure{margin:0;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#fff}.slide-media-grid img{display:block;width:100%;max-height:340px;object-fit:contain;background:#fff}.slide-media-grid figcaption{padding:7px 10px;color:var(--muted);font-size:.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.script{font-size:.95rem;color:#475569;background:#f8fafc;border-left:4px solid var(--blue);padding:12px}',
     '.slide.designed{background:var(--course-slide-bg,#fff);color:var(--course-slide-ink,var(--ink));font-family:var(--course-slide-font,Arial,Helvetica,sans-serif);aspect-ratio:var(--course-slide-ratio,16 / 9);border-top:5px solid var(--course-slide-accent,var(--blue));animation-duration:var(--course-transition-duration,.7s);animation-timing-function:ease;animation-fill-mode:both}.slide.designed h2,.slide.designed p{color:var(--course-slide-ink,var(--ink))}.slide.designed .media,.slide.designed .object-control{background:var(--course-slide-panel,#f7fafc)}',
     '.fx-fade{animation-name:courseFade}.fx-push{animation-name:coursePush}.fx-wipe{animation-name:courseWipe}.fx-cover{animation-name:courseCover}.fx-uncover{animation-name:courseUncover}.fx-reveal{animation-name:courseReveal}.fx-split{animation-name:courseSplit}.fx-bars{animation-name:courseBars}@keyframes courseFade{from{opacity:0}to{opacity:1}}@keyframes coursePush{from{opacity:.4;transform:translateX(32px)}to{opacity:1;transform:translateX(0)}}@keyframes courseWipe{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}@keyframes courseCover{from{transform:translateY(24px);opacity:.7}to{transform:none;opacity:1}}@keyframes courseUncover{from{clip-path:circle(8% at 50% 50%)}to{clip-path:circle(80% at 50% 50%)}}@keyframes courseReveal{from{filter:blur(8px);opacity:.2}to{filter:blur(0);opacity:1}}@keyframes courseSplit{from{clip-path:inset(48% 0 48% 0)}to{clip-path:inset(0 0 0 0)}}@keyframes courseBars{from{opacity:.2;transform:scaleX(.92)}to{opacity:1;transform:scaleX(1)}}',
     '.object-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}.object-control{border:1px solid var(--line);border-radius:8px;background:#f8fafc;padding:12px;color:var(--ink);text-align:left}.object-control strong,.object-control span{display:block}.object-control input{width:100%;margin-top:8px}.object-control.inline{display:flex;align-items:center;gap:8px}.object-control.inline input{width:auto;margin:0}.object-control.action{cursor:pointer}',
@@ -3381,9 +3542,31 @@ function buildCoursePlayerJs(standard) {
     var quiz = scene.type === 'quiz' && scene.question ? quizHtml(scene) : '';
     var objects = objectHtml(scene);
     var script = lesson.includeTranscript && scene.narration ? '<p class="script">' + h(scene.narration) + '</p>' : '';
+    var content = contentHtml(scene);
+    var media = mediaHtml(scene);
     var design = lesson.design || {};
     var style = '--course-slide-bg:' + (design.bg || '#ffffff') + ';--course-slide-ink:' + (design.ink || '#17212f') + ';--course-slide-panel:' + (design.panel || '#f7fafc') + ';--course-slide-accent:' + (design.accent || '#255c99') + ';--course-slide-font:' + (design.font || 'Arial,Helvetica,sans-serif') + ';--course-slide-ratio:' + (design.ratio || '16 / 9') + ';--course-transition-duration:' + Number(scene.transitionEffectDuration || .7) + 's';
-    return '<article class="slide designed ' + transitionClass(scene.transition || scene.transitionKey) + '" style="' + h(style) + '"><div class="slide-top"><span>' + h(scene.type || 'scene') + '</span><span>' + (index + 1) + '/' + scenes.length + '</span></div><h2>' + h(scene.title || '') + '</h2><p>' + h(scene.content || '') + '</p><div class="media">' + h(scene.visual || 'Media') + '</div>' + objects + quiz + script + '</article>';
+    return '<article class="slide designed ' + transitionClass(scene.transition || scene.transitionKey) + '" style="' + h(style) + '"><div class="slide-top"><span>' + h(scene.type || 'scene') + '</span><span>' + (index + 1) + '/' + scenes.length + '</span></div><h2>' + h(scene.title || '') + '</h2>' + content + media + objects + quiz + script + '</article>';
+  }
+
+  function contentHtml(scene) {
+    var bullets = Array.isArray(scene.bullets) ? scene.bullets.filter(Boolean) : [];
+    if (bullets.length) {
+      var intro = scene.content && bullets.join(' ').indexOf(scene.content) < 0 ? '<p>' + h(scene.content) + '</p>' : '';
+      return '<div class="slide-content">' + intro + '<ul>' + bullets.map(function(item) { return '<li>' + h(item) + '</li>'; }).join('') + '</ul></div>';
+    }
+    return '<p>' + h(scene.content || scene.rawText || '') + '</p>';
+  }
+
+  function mediaHtml(scene) {
+    var images = Array.isArray(scene.images) ? scene.images.filter(function(image) { return image && image.dataUrl; }) : [];
+    var visual = String(scene.visual || '').trim();
+    var html = images.length ? '<div class="slide-media-grid">' + images.map(function(image) {
+      return '<figure><img src="' + h(image.dataUrl) + '" alt="' + h(image.alt || image.name || 'Ảnh từ PowerPoint') + '" /><figcaption>' + h(image.name || 'Ảnh PPTX') + '</figcaption></figure>';
+    }).join('') + '</div>' : '';
+    if (!visual) return html;
+    var isPptxSource = visual.indexOf('Nguồn PPTX:') === 0 || visual.indexOf('Nguon PPTX:') === 0;
+    return html + '<div class="media' + (isPptxSource ? ' media-note' : '') + '">' + h(visual) + '</div>';
   }
 
   function transitionClass(value) {

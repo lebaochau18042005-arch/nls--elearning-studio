@@ -920,6 +920,37 @@ button:focus-visible {
   padding-left: 2px;
 }
 
+.canvas-media-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+.canvas-media-grid figure {
+  margin: 0;
+  border: 1px solid #d6e1ec;
+  border-radius: 8px;
+  background: #f8fbff;
+  overflow: hidden;
+}
+
+.canvas-media-grid img {
+  display: block;
+  width: 100%;
+  max-height: 260px;
+  object-fit: contain;
+  background: #fff;
+}
+
+.canvas-media-grid figcaption {
+  padding: 7px 9px;
+  color: #607085;
+  font-size: 0.78rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .pptx-source-note {
   align-self: end;
   border: 1px solid #d6e1ec;
