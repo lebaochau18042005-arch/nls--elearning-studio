@@ -1138,24 +1138,58 @@ function renderStudio() {
   const lesson = state.lesson;
   const scene = currentScene();
   if (!lesson || !scene) return '<section class="empty-state"><h2>Chưa có kịch bản</h2><p>Hãy tạo kế hoạch để app sinh bài giảng e-learning.</p></section>';
+  const isPptxMode = isPptxLesson(lesson);
   const sceneButtons = lesson.scenes.map(function(item, index) {
+    if (isPptxMode) return renderSlideThumbnail(item, index);
     return '<button class="scene-chip' + (index === state.selectedScene ? ' is-active' : '') + '" type="button" data-select-scene="' + index + '">' +
       '<span>' + String(index + 1).padStart(2, '0') + '</span><strong>' + esc(item.title) + '</strong><small>' + sceneTypeLabel(item.type) + ' · ' + item.duration + 's</small></button>';
   }).join('');
-  return '<section class="studio-board activepresenter-board">' +
-    renderPptxImportBox() +
+  return '<section class="studio-board activepresenter-board' + (isPptxMode ? ' pptx-authoring-mode' : '') + '">' +
+    (isPptxMode ? renderPptxImportMini(lesson) : renderPptxImportBox()) +
     renderAuthorRibbon(lesson) +
     '<div class="author-workspace">' +
-      '<aside class="slides-pane" aria-label="Danh sách slide"><div class="pane-title"><strong>Slides</strong><span>' + lesson.scenes.length + '</span></div><div class="scene-list">' + sceneButtons + '<button class="add-scene-button" type="button" data-add-scene="1">+ Thêm slide</button></div></aside>' +
+      '<aside class="slides-pane" aria-label="Danh sách slide"><div class="pane-title"><strong>Slide chính</strong><span>' + lesson.scenes.length + '</span></div><div class="scene-list' + (isPptxMode ? ' thumbnail-list' : '') + '">' + sceneButtons + '<button class="add-scene-button" type="button" data-add-scene="1">+ Thêm slide</button></div></aside>' +
       '<main class="canvas-pane">' +
-        '<div class="canvas-toolbar"><div><strong>Canvas</strong><span>' + esc(sceneTypeLabel(scene.type)) + ' · ' + esc(scene.duration) + 's</span></div><div class="canvas-tools"><span>16:9</span><span>Fit</span><span>100%</span></div></div>' +
+        '<div class="canvas-toolbar"><div><strong>' + (isPptxMode ? 'Màn hình chính từ PPTX' : 'Canvas') + '</strong><span>' + esc(sceneTypeLabel(scene.type)) + ' · ' + esc(scene.duration) + 's</span></div><div class="canvas-tools"><span>16:9</span><span>Fit</span><span>100%</span></div></div>' +
         '<div class="canvas-stage">' + renderSlideCanvas(scene, state.selectedScene, lesson.scenes.length) + '</div>' +
       '</main>' +
-      '<aside class="inspector-pane" aria-label="Thuộc tính và tương tác">' + renderSceneInspector(scene, lesson) + '</aside>' +
+      '<aside class="inspector-pane" aria-label="Thuộc tính và tương tác">' + renderSceneInspector(scene, lesson) + (isPptxMode ? renderPptxResourcePanel(scene, lesson) : '') + '</aside>' +
     '</div>' +
     renderAuthorTimeline(lesson) +
     renderAiAssistantPanel() +
   '</section>';
+}
+
+function isPptxLesson(lesson) {
+  if (!lesson) return false;
+  if (lesson.source && lesson.source.type === 'pptx') return true;
+  if (String(lesson.mode || '').toLowerCase().indexOf('ppt') >= 0) return true;
+  const scenes = Array.isArray(lesson.scenes) ? lesson.scenes : [];
+  return scenes.some(function(scene) {
+    return String(scene.id || '').indexOf('pptx-') === 0 ||
+      String(scene.layout || '').toLowerCase().indexOf('powerpoint') >= 0 ||
+      String(scene.visual || '').indexOf('PPTX') >= 0 ||
+      (Array.isArray(scene.pptxObjects) && scene.pptxObjects.length) ||
+      (Array.isArray(scene.images) && scene.images.length);
+  });
+}
+
+function renderSlideThumbnail(scene, index) {
+  const thumb = Array.isArray(scene.pptxObjects) && scene.pptxObjects.length
+    ? renderPptxReplica(scene, 'thumb')
+    : '<div class="thumb-fallback"><strong>' + esc(scene.title || ('Slide ' + (index + 1))) + '</strong></div>';
+  return '<button class="slide-thumb-card' + (index === state.selectedScene ? ' is-active' : '') + '" type="button" data-select-scene="' + index + '">' +
+    '<div class="slide-thumb-preview">' + thumb + '</div>' +
+    '<span>' + (index + 1) + '</span>' +
+  '</button>';
+}
+
+function renderPptxImportMini(lesson) {
+  const source = lesson.source || {};
+  return '<div class="pptx-mini-bar">' +
+    '<strong>Đã nhập PPTX</strong><span>' + esc(source.filename || lesson.title || 'PowerPoint') + '</span><small>' + esc(source.slideCount || lesson.scenes.length) + ' slide</small>' +
+    '<button class="utility-button" type="button" data-focus-pptx="1">Nhập file khác</button>' +
+  '</div>';
 }
 
 function renderPptxImportBox() {
@@ -1248,6 +1282,24 @@ function renderSceneInspector(scene, lesson) {
     renderEventActionPanel(scene) +
     renderVariablePanel(lesson) +
   '</div>';
+}
+
+function renderPptxResourcePanel(scene, lesson) {
+  const objects = Array.isArray(scene.pptxObjects) ? scene.pptxObjects : [];
+  const images = objects.filter(function(object) { return object.type === 'image'; });
+  const texts = objects.filter(function(object) { return object.type === 'text'; });
+  const animated = objects.filter(function(object) { return object.animation; });
+  const cards = objects.length ? objects.slice(0, 12).map(function(object, index) {
+    if (object.type === 'image') {
+      return '<article class="resource-card"><img src="' + esc(object.src) + '" alt="' + esc(object.alt || object.name || 'Ảnh PPTX') + '" /><small>' + esc(object.name || ('Ảnh ' + (index + 1))) + '</small></article>';
+    }
+    return '<article class="resource-card text-resource"><strong>TXT</strong><small>' + esc((object.text || '').slice(0, 42) || ('Văn bản ' + (index + 1))) + '</small></article>';
+  }).join('') : '<p class="mini-note">Slide này chưa có tài nguyên tái dựng từ PPTX.</p>';
+  return '<section class="pptx-resource-dock" aria-label="Tài nguyên từ PPTX">' +
+    '<div class="pane-title"><strong>Tài nguyên</strong><span>' + objects.length + '</span></div>' +
+    '<div class="resource-summary"><span>Ảnh: ' + images.length + '</span><span>Văn bản: ' + texts.length + '</span><span>Animation: ' + animated.length + '</span></div>' +
+    '<div class="resource-grid">' + cards + '</div>' +
+  '</section>';
 }
 
 function renderAiAssistantPanel() {
@@ -1459,6 +1511,7 @@ function renderSlideCanvas(scene, index, total) {
   const objects = renderSceneObjects(scene);
   const content = renderSceneContent(scene);
   const media = renderSceneMedia(scene);
+  const fallback = renderSlideFallback(scene, index, total);
   const design = currentDesign();
   const designStyle = [
     '--slide-accent:' + (design.accent || '#255c99'),
@@ -1468,11 +1521,62 @@ function renderSlideCanvas(scene, index, total) {
     'font-family:' + (design.font || 'Arial, Helvetica, sans-serif'),
     'aspect-ratio:' + (design.ratio || '16 / 9')
   ].join(';');
+  if (Array.isArray(scene.pptxObjects) && scene.pptxObjects.length) {
+    return '<div class="slide-frame slide-' + esc(scene.type) + ' designed-slide pptx-slide-frame" style="' + esc(designStyle) + '">' +
+      renderPptxReplica(scene, 'canvas') + quiz + script +
+    '</div>';
+  }
   return '<div class="slide-frame slide-' + esc(scene.type) + ' designed-slide" style="' + esc(designStyle) + '">' +
-    '<div class="slide-top"><span>' + sceneTypeLabel(scene.type) + '</span><span>' + (index + 1) + '/' + total + '</span></div>' +
-    '<h3>' + esc(scene.title) + '</h3>' +
-    content + media + objects + quiz + script +
+    fallback + content + media + objects + quiz + script +
   '</div>';
+}
+
+function renderSlideFallback(scene, index, total) {
+  const title = scene.title || scene.rawText || ('Slide ' + (index + 1));
+  return '<div class="slide-top"><span>' + sceneTypeLabel(scene.type || 'content') + '</span><span>' + (index + 1) + '/' + total + '</span></div>' +
+    '<h3>' + esc(title) + '</h3>';
+}
+
+function renderPptxReplica(scene, mode) {
+  const objects = Array.isArray(scene.pptxObjects) ? scene.pptxObjects : [];
+  if (!objects.length) return '';
+  return '<div class="pptx-replica" aria-label="Slide PowerPoint gốc">' + objects.map(function(object, index) {
+    const style = pptxObjectStyle(object);
+    const animation = mode === 'thumb' ? '' : pptxAnimationClass(object.animation, index);
+    if (object.type === 'image') {
+      return '<div class="pptx-object pptx-image ' + animation + '" style="' + esc(style) + '"><img src="' + esc(object.src) + '" alt="' + esc(object.alt || object.name || 'Ảnh từ PowerPoint') + '" /></div>';
+    }
+    const textStyle = pptxTextInlineStyle(object.style || {});
+    return '<div class="pptx-object pptx-text ' + animation + '" style="' + esc(style + textStyle) + '">' + esc(object.text || '') + '</div>';
+  }).join('') + '</div>';
+}
+
+function pptxObjectStyle(object) {
+  const left = clampNumber(object.left, -20, 120, 0);
+  const top = clampNumber(object.top, -20, 120, 0);
+  const width = clampNumber(object.width, 0, 120, 10);
+  const height = clampNumber(object.height, 0, 120, 10);
+  const animation = object.animation || {};
+  return 'left:' + left + '%;top:' + top + '%;width:' + width + '%;height:' + height + '%;--pptx-delay:' + Number(animation.delay || 0) + 's;--pptx-duration:' + Number(animation.duration || .65) + 's;';
+}
+
+function pptxTextInlineStyle(style) {
+  const parts = [];
+  if (style.fontSize) parts.push('font-size:' + clampNumber(style.fontSize, 8, 72, 24) + 'px');
+  if (style.color) parts.push('color:' + style.color);
+  if (style.bold) parts.push('font-weight:700');
+  if (style.italic) parts.push('font-style:italic');
+  return parts.length ? parts.join(';') + ';' : '';
+}
+
+function pptxAnimationClass(animation, index) {
+  if (!animation) return '';
+  const type = String(animation.type || 'fade').toLowerCase();
+  if (type === 'zoom') return 'pptx-anim pptx-anim-zoom';
+  if (type === 'fly') return 'pptx-anim pptx-anim-fly';
+  if (type === 'spin') return 'pptx-anim pptx-anim-spin';
+  if (type === 'wipe') return 'pptx-anim pptx-anim-wipe';
+  return 'pptx-anim pptx-anim-fade';
 }
 
 function renderSceneContent(scene) {
@@ -1485,7 +1589,8 @@ function renderSceneContent(scene) {
       return '<li>' + esc(item) + '</li>';
     }).join('') + '</ul></div>';
   }
-  return '<p>' + esc(scene.content || '') + '</p>';
+  const text = scene.content || scene.rawText || scene.narration || '';
+  return text ? '<p>' + esc(text) + '</p>' : '<p class="empty-slide-note">Slide này chưa có nội dung đọc được. Hãy nhập lại PPTX hoặc dùng tab Thêm để bổ sung ảnh/văn bản.</p>';
 }
 
 function renderSceneMedia(scene) {
@@ -2703,6 +2808,7 @@ async function readPptxSlides(file) {
   const bytes = new Uint8Array(await file.arrayBuffer());
   const entries = readZipCentralDirectory(bytes);
   const entryMap = zipEntryMap(entries);
+  const slideSize = await readPptxSlideSize(bytes, entryMap);
   const slideEntries = entries
     .filter(function(entry) { return /^ppt\/slides\/slide\d+\.xml$/i.test(entry.name); })
     .sort(function(a, b) { return slideNumber(a.name) - slideNumber(b.name); });
@@ -2716,14 +2822,18 @@ async function readPptxSlides(file) {
     const rels = await readPptxRelationships(bytes, entryMap, entry.name);
     const imageIds = extractPptxImageRelIds(xml);
     const images = await readPptxImages(bytes, entryMap, entry.name, rels, imageIds);
+    const imageMap = pptxImageMap(images);
+    const objects = extractPptxObjects(xml, imageMap, slideSize);
     const transition = extractPptxTransition(xml);
-    if (!cleanTexts.length && !images.length) continue;
+    if (!cleanTexts.length && !images.length && !objects.length) continue;
     slides.push({
       number: slideNumber(entry.name),
       title: cleanTexts[0] || ('Slide ' + slideNumber(entry.name)),
       bullets: cleanTexts.slice(1),
       rawText: cleanTexts.join('\n'),
       images: images,
+      objects: objects,
+      size: slideSize,
       transition: transition
     });
   }
@@ -2755,6 +2865,19 @@ async function readPptxRelationships(bytes, entryMap, slidePath) {
   return rels;
 }
 
+async function readPptxSlideSize(bytes, entryMap) {
+  const entry = entryMap['ppt/presentation.xml'];
+  if (!entry) return { width: 12192000, height: 6858000 };
+  const xmlBytes = await unzipEntry(bytes, entry);
+  const xml = new TextDecoder('utf-8').decode(xmlBytes);
+  const doc = new DOMParser().parseFromString(xml, 'application/xml');
+  const size = findFirstByLocalName(doc, 'sldSz');
+  return {
+    width: Number(size && size.getAttribute('cx')) || 12192000,
+    height: Number(size && size.getAttribute('cy')) || 6858000
+  };
+}
+
 function extractPptxImageRelIds(xml) {
   const doc = new DOMParser().parseFromString(xml, 'application/xml');
   const nodes = Array.from(doc.getElementsByTagName('a:blip')).concat(Array.from(doc.getElementsByTagName('blip')));
@@ -2770,7 +2893,7 @@ function extractPptxImageRelIds(xml) {
 
 async function readPptxImages(bytes, entryMap, slidePath, rels, imageIds) {
   const images = [];
-  for (let index = 0; index < imageIds.length && images.length < 3; index += 1) {
+  for (let index = 0; index < imageIds.length && images.length < 24; index += 1) {
     const relId = imageIds[index];
     const target = rels[relId];
     if (!target || /^https?:\/\//i.test(target)) continue;
@@ -2778,11 +2901,12 @@ async function readPptxImages(bytes, entryMap, slidePath, rels, imageIds) {
     const entry = entryMap[imagePath.toLowerCase()];
     if (!entry) continue;
     const data = await unzipEntry(bytes, entry);
-    if (data.length > 2500000) continue;
+    if (data.length > 5000000) continue;
     const name = imagePath.split('/').pop() || ('image-' + (images.length + 1));
     const mime = mimeFromPath(name);
     if (mime.indexOf('image/') !== 0) continue;
     images.push({
+      relId: relId,
       name: name,
       mime: mime,
       dataUrl: 'data:' + mime + ';base64,' + bytesToBase64(data),
@@ -2790,6 +2914,130 @@ async function readPptxImages(bytes, entryMap, slidePath, rels, imageIds) {
     });
   }
   return images;
+}
+
+function pptxImageMap(images) {
+  const map = {};
+  images.forEach(function(image) {
+    if (image.relId) map[image.relId] = image;
+  });
+  return map;
+}
+
+function extractPptxObjects(xml, imageMap, slideSize) {
+  const doc = new DOMParser().parseFromString(xml, 'application/xml');
+  const spTree = findFirstByLocalName(doc, 'spTree');
+  const animations = extractPptxAnimations(doc);
+  if (!spTree) return [];
+  const objects = [];
+  Array.from(spTree.children || []).forEach(function(node) {
+    const kind = pptxLocalName(node);
+    if (kind !== 'pic' && kind !== 'sp') return;
+    const rect = pptxRect(node, slideSize);
+    if (!rect) return;
+    const shapeId = pptxShapeId(node);
+    const animation = animations[shapeId] || null;
+    if (kind === 'pic') {
+      const relId = pptxImageRelId(node);
+      const image = imageMap[relId];
+      if (!image) return;
+      objects.push(Object.assign({
+        type: 'image',
+        shapeId: shapeId,
+        relId: relId,
+        src: image.dataUrl,
+        alt: image.alt || image.name || 'Ảnh từ PowerPoint',
+        name: image.name || 'Ảnh PPTX'
+      }, rect, { animation: animation }));
+      return;
+    }
+    const text = extractTextFromNode(node);
+    if (!text) return;
+    objects.push(Object.assign({
+      type: 'text',
+      shapeId: shapeId,
+      text: text,
+      style: pptxTextStyle(node)
+    }, rect, { animation: animation }));
+  });
+  return objects;
+}
+
+function pptxRect(node, slideSize) {
+  const xfrm = findFirstByLocalName(node, 'xfrm');
+  const off = xfrm && findFirstByLocalName(xfrm, 'off');
+  const ext = xfrm && findFirstByLocalName(xfrm, 'ext');
+  if (!off || !ext) return null;
+  const width = Number(slideSize.width) || 12192000;
+  const height = Number(slideSize.height) || 6858000;
+  return {
+    left: (Number(off.getAttribute('x')) || 0) / width * 100,
+    top: (Number(off.getAttribute('y')) || 0) / height * 100,
+    width: (Number(ext.getAttribute('cx')) || 0) / width * 100,
+    height: (Number(ext.getAttribute('cy')) || 0) / height * 100
+  };
+}
+
+function pptxShapeId(node) {
+  const cNvPr = findFirstByLocalName(node, 'cNvPr');
+  return cNvPr ? String(cNvPr.getAttribute('id') || '') : '';
+}
+
+function pptxImageRelId(node) {
+  const blip = findFirstByLocalName(node, 'blip');
+  return blip ? (blip.getAttribute('r:embed') || blip.getAttribute('embed') || blip.getAttribute('r:link') || blip.getAttribute('link') || '') : '';
+}
+
+function extractTextFromNode(node) {
+  return Array.from(node.getElementsByTagName('a:t')).map(function(item) {
+    return item.textContent || '';
+  }).join('\n').replace(/\n{3,}/g, '\n\n').trim();
+}
+
+function pptxTextStyle(node) {
+  const rPr = findFirstByLocalName(node, 'rPr') || findFirstByLocalName(node, 'defRPr');
+  const srgb = rPr && findFirstByLocalName(rPr, 'srgbClr');
+  const size = Number(rPr && rPr.getAttribute('sz')) || 0;
+  return {
+    fontSize: size ? Math.max(8, Math.min(72, size / 100)) : 24,
+    color: srgb && srgb.getAttribute('val') ? '#' + srgb.getAttribute('val') : '#111111',
+    bold: rPr && rPr.getAttribute('b') === '1',
+    italic: rPr && rPr.getAttribute('i') === '1'
+  };
+}
+
+function extractPptxAnimations(doc) {
+  const targets = Array.from(doc.getElementsByTagName('p:spTgt')).concat(Array.from(doc.getElementsByTagName('spTgt')));
+  const map = {};
+  targets.forEach(function(node, index) {
+    const id = String(node.getAttribute('spid') || '');
+    if (!id || map[id]) return;
+    map[id] = {
+      type: detectPptxAnimation(node),
+      order: index,
+      delay: Math.min(index * 0.28, 3.5),
+      duration: 0.65
+    };
+  });
+  return map;
+}
+
+function detectPptxAnimation(node) {
+  let cursor = node;
+  while (cursor) {
+    const name = pptxLocalName(cursor);
+    if (name === 'animScale') return 'zoom';
+    if (name === 'animMotion') return 'fly';
+    if (name === 'animRot') return 'spin';
+    if (name === 'animEffect') {
+      const filter = String(cursor.getAttribute('filter') || '').toLowerCase();
+      if (filter.indexOf('wipe') >= 0) return 'wipe';
+      if (filter.indexOf('zoom') >= 0) return 'zoom';
+      if (filter.indexOf('fly') >= 0 || filter.indexOf('crawl') >= 0) return 'fly';
+    }
+    cursor = cursor.parentNode;
+  }
+  return 'fade';
 }
 
 function resolveZipPath(fromPath, target) {
@@ -2930,6 +3178,12 @@ function pptxLocalName(node) {
   return String(node.localName || node.nodeName || '').replace(/^.*:/, '');
 }
 
+function findFirstByLocalName(root, name) {
+  return Array.from(root.getElementsByTagName('*')).find(function(node) {
+    return pptxLocalName(node) === name;
+  }) || null;
+}
+
 function normalizeTransitionDirection(value) {
   const dir = String(value || '').toLowerCase();
   if (dir === 'l' || dir === 'left') return 'left';
@@ -2971,6 +3225,8 @@ function applySlidesToLesson(slides, filename) {
       bullets: slide.bullets.slice(0, 12),
       rawText: text,
       images: slide.images || [],
+      pptxObjects: slide.objects || [],
+      pptxSize: slide.size || null,
       narration: narrationLine('Trình bày nội dung slide ' + slide.number + ': ' + text.slice(0, 220), state.plan),
       visual: 'Nguồn PPTX: ' + filename + ' - slide ' + slide.number,
       transition: slide.transition ? slide.transition.effect : (index ? 'Fade' : 'None'),
@@ -3493,6 +3749,7 @@ function buildCoursePlayerCss() {
     '.course-header{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;padding:18px 22px;background:#fff;border-bottom:1px solid var(--line)}.course-header h1{margin:0 0 6px;font-size:1.35rem;line-height:1.25}.course-header p{margin:0;color:var(--muted);line-height:1.45}.badge{display:inline-flex;align-items:center;min-height:30px;border:1px solid var(--line);border-radius:6px;padding:0 10px;background:#eef6f5;color:var(--teal);font-weight:800;white-space:nowrap}',
     '.stage{display:grid;grid-template-columns:minmax(210px,280px) minmax(0,1fr);gap:18px;padding:18px}.toc{display:grid;gap:8px;align-content:start}.toc button{border:1px solid var(--line);background:#fff;border-radius:8px;padding:10px;text-align:left;color:var(--ink)}.toc button[aria-current=true]{border-color:var(--teal);box-shadow:0 0 0 3px rgba(15,118,110,.14)}.toc strong{display:block}.toc small{color:var(--muted)}',
     '.slide{min-height:520px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:28px;display:grid;align-content:start;gap:16px}.slide-top{display:flex;justify-content:space-between;color:var(--muted);font-weight:800}.slide h2{margin:0;font-size:clamp(1.6rem,4vw,3rem);line-height:1.12}.slide p{font-size:1.05rem;line-height:1.65;margin:0}.slide-content{display:grid;gap:8px;font-size:1.04rem;line-height:1.55}.slide-content ul{margin:0;padding-left:1.25rem;display:grid;gap:6px}.media{border:1px dashed #b8c6d2;background:#f7fafc;border-radius:8px;padding:14px;color:var(--muted);line-height:1.5}.media-note{font-size:.86rem}.slide-media-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}.slide-media-grid figure{margin:0;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#fff}.slide-media-grid img{display:block;width:100%;max-height:340px;object-fit:contain;background:#fff}.slide-media-grid figcaption{padding:7px 10px;color:var(--muted);font-size:.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.script{font-size:.95rem;color:#475569;background:#f8fafc;border-left:4px solid var(--blue);padding:12px}',
+    '.pptx-course-slide{padding:0;overflow:hidden;align-content:stretch;background:#fff}.pptx-replica{position:relative;width:100%;aspect-ratio:16/9;background:#fff;overflow:hidden}.pptx-object{position:absolute;box-sizing:border-box}.pptx-image img{display:block;width:100%;height:100%;object-fit:contain}.pptx-text{display:flex;align-items:center;white-space:pre-line;overflow:hidden;padding:.3% .5%;line-height:1.16;font-family:Cambria,"Times New Roman",serif}.pptx-anim{animation-duration:var(--pptx-duration,.65s);animation-delay:var(--pptx-delay,0s);animation-fill-mode:both;animation-timing-function:ease}.pptx-anim-fade{animation-name:pptxFadeIn}.pptx-anim-fly{animation-name:pptxFlyIn}.pptx-anim-zoom{animation-name:pptxZoomIn}.pptx-anim-spin{animation-name:pptxSpinIn}.pptx-anim-wipe{animation-name:pptxWipeIn}@keyframes pptxFadeIn{from{opacity:0}to{opacity:1}}@keyframes pptxFlyIn{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}@keyframes pptxZoomIn{from{opacity:0;transform:scale(.78)}to{opacity:1;transform:scale(1)}}@keyframes pptxSpinIn{from{opacity:0;transform:rotate(-12deg) scale(.9)}to{opacity:1;transform:rotate(0) scale(1)}}@keyframes pptxWipeIn{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}',
     '.slide.designed{background:var(--course-slide-bg,#fff);color:var(--course-slide-ink,var(--ink));font-family:var(--course-slide-font,Arial,Helvetica,sans-serif);aspect-ratio:var(--course-slide-ratio,16 / 9);border-top:5px solid var(--course-slide-accent,var(--blue));animation-duration:var(--course-transition-duration,.7s);animation-timing-function:ease;animation-fill-mode:both}.slide.designed h2,.slide.designed p{color:var(--course-slide-ink,var(--ink))}.slide.designed .media,.slide.designed .object-control{background:var(--course-slide-panel,#f7fafc)}',
     '.fx-fade{animation-name:courseFade}.fx-push{animation-name:coursePush}.fx-wipe{animation-name:courseWipe}.fx-cover{animation-name:courseCover}.fx-uncover{animation-name:courseUncover}.fx-reveal{animation-name:courseReveal}.fx-split{animation-name:courseSplit}.fx-bars{animation-name:courseBars}@keyframes courseFade{from{opacity:0}to{opacity:1}}@keyframes coursePush{from{opacity:.4;transform:translateX(32px)}to{opacity:1;transform:translateX(0)}}@keyframes courseWipe{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}@keyframes courseCover{from{transform:translateY(24px);opacity:.7}to{transform:none;opacity:1}}@keyframes courseUncover{from{clip-path:circle(8% at 50% 50%)}to{clip-path:circle(80% at 50% 50%)}}@keyframes courseReveal{from{filter:blur(8px);opacity:.2}to{filter:blur(0);opacity:1}}@keyframes courseSplit{from{clip-path:inset(48% 0 48% 0)}to{clip-path:inset(0 0 0 0)}}@keyframes courseBars{from{opacity:.2;transform:scaleX(.92)}to{opacity:1;transform:scaleX(1)}}',
     '.object-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}.object-control{border:1px solid var(--line);border-radius:8px;background:#f8fafc;padding:12px;color:var(--ink);text-align:left}.object-control strong,.object-control span{display:block}.object-control input{width:100%;margin-top:8px}.object-control.inline{display:flex;align-items:center;gap:8px}.object-control.inline input{width:auto;margin:0}.object-control.action{cursor:pointer}',
@@ -3555,7 +3812,52 @@ function buildCoursePlayerJs(standard) {
     var media = mediaHtml(scene);
     var design = lesson.design || {};
     var style = '--course-slide-bg:' + (design.bg || '#ffffff') + ';--course-slide-ink:' + (design.ink || '#17212f') + ';--course-slide-panel:' + (design.panel || '#f7fafc') + ';--course-slide-accent:' + (design.accent || '#255c99') + ';--course-slide-font:' + (design.font || 'Arial,Helvetica,sans-serif') + ';--course-slide-ratio:' + (design.ratio || '16 / 9') + ';--course-transition-duration:' + Number(scene.transitionEffectDuration || .7) + 's';
+    if (Array.isArray(scene.pptxObjects) && scene.pptxObjects.length) {
+      return '<article class="slide designed pptx-course-slide ' + transitionClass(scene.transition || scene.transitionKey) + '" style="' + h(style) + '">' + pptxReplicaHtml(scene) + quiz + script + '</article>';
+    }
     return '<article class="slide designed ' + transitionClass(scene.transition || scene.transitionKey) + '" style="' + h(style) + '"><div class="slide-top"><span>' + h(scene.type || 'scene') + '</span><span>' + (index + 1) + '/' + scenes.length + '</span></div><h2>' + h(scene.title || '') + '</h2>' + content + media + objects + quiz + script + '</article>';
+  }
+
+  function pptxReplicaHtml(scene) {
+    var items = Array.isArray(scene.pptxObjects) ? scene.pptxObjects : [];
+    return '<div class="pptx-replica" aria-label="Slide PowerPoint gốc">' + items.map(function(object, objectIndex) {
+      var style = pptxObjectStyle(object);
+      var animation = pptxAnimationClass(object.animation);
+      if (object.type === 'image') {
+        return '<div class="pptx-object pptx-image ' + animation + '" style="' + h(style) + '"><img src="' + h(object.src || '') + '" alt="' + h(object.alt || object.name || 'Ảnh từ PowerPoint') + '" /></div>';
+      }
+      return '<div class="pptx-object pptx-text ' + animation + '" style="' + h(style + pptxTextStyle(object.style || {})) + '">' + h(object.text || '') + '</div>';
+    }).join('') + '</div>';
+  }
+
+  function pptxObjectStyle(object) {
+    var animation = object.animation || {};
+    return 'left:' + n(object.left, 0) + '%;top:' + n(object.top, 0) + '%;width:' + n(object.width, 10) + '%;height:' + n(object.height, 10) + '%;--pptx-delay:' + Number(animation.delay || 0) + 's;--pptx-duration:' + Number(animation.duration || .65) + 's;';
+  }
+
+  function pptxTextStyle(style) {
+    var parts = [];
+    if (style.fontSize) parts.push('font-size:' + Math.max(8, Math.min(72, Number(style.fontSize) || 24)) + 'px');
+    if (style.color) parts.push('color:' + style.color);
+    if (style.bold) parts.push('font-weight:700');
+    if (style.italic) parts.push('font-style:italic');
+    return parts.length ? parts.join(';') + ';' : '';
+  }
+
+  function pptxAnimationClass(animation) {
+    if (!animation) return '';
+    var type = String(animation.type || 'fade').toLowerCase();
+    if (type === 'zoom') return 'pptx-anim pptx-anim-zoom';
+    if (type === 'fly') return 'pptx-anim pptx-anim-fly';
+    if (type === 'spin') return 'pptx-anim pptx-anim-spin';
+    if (type === 'wipe') return 'pptx-anim pptx-anim-wipe';
+    return 'pptx-anim pptx-anim-fade';
+  }
+
+  function n(value, fallback) {
+    var number = Number(value);
+    if (!isFinite(number)) number = fallback;
+    return Math.max(-20, Math.min(120, number));
   }
 
   function contentHtml(scene) {
