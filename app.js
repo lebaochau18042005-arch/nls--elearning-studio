@@ -1140,6 +1140,7 @@ function renderStudio() {
   const scene = currentScene();
   if (!lesson || !scene) return '<section class="empty-state"><h2>Chưa có kịch bản</h2><p>Hãy tạo kế hoạch để app sinh bài giảng e-learning.</p></section>';
   const isPptxMode = isPptxLesson(lesson);
+  if (isPptxMode) ensureEditablePptxScenes(lesson);
   const sceneButtons = lesson.scenes.map(function(item, index) {
     if (isPptxMode) return renderSlideThumbnail(item, index);
     return '<button class="scene-chip' + (index === state.selectedScene ? ' is-active' : '') + '" type="button" data-select-scene="' + index + '">' +
@@ -1159,6 +1160,25 @@ function renderStudio() {
     renderAuthorTimeline(lesson) +
     renderAiAssistantPanel() +
   '</section>';
+}
+
+function ensureEditablePptxScenes(lesson) {
+  const scenes = Array.isArray(lesson.scenes) ? lesson.scenes : [];
+  scenes.forEach(function(scene, index) {
+    if (Array.isArray(scene.pptxObjects) && scene.pptxObjects.length) return;
+    const hasPptxSignals = String(scene.id || '').indexOf('pptx-') === 0 ||
+      String(scene.layout || '').toLowerCase().indexOf('powerpoint') >= 0 ||
+      String(scene.visual || '').indexOf('PPTX') >= 0 ||
+      (Array.isArray(scene.images) && scene.images.length);
+    if (!hasPptxSignals) return;
+    scene.pptxObjects = buildEditablePptxFallbackObjects({
+      number: index + 1,
+      title: scene.title,
+      bullets: Array.isArray(scene.bullets) ? scene.bullets : (scene.content ? [scene.content] : []),
+      rawText: scene.rawText || scene.content || scene.narration || '',
+      images: scene.images || []
+    });
+  });
 }
 
 function isPptxLesson(lesson) {
@@ -1583,7 +1603,7 @@ function renderPptxReplica(scene, mode) {
     }
     const textStyle = pptxTextInlineStyle(object.style || {});
     const editable = selectable ? ' contenteditable="true" spellcheck="false" data-pptx-object-text="' + index + '"' : '';
-    return '<div class="pptx-object pptx-text ' + animation + selected + '"' + selectAttrs + editable + ' style="' + esc(style + textStyle) + '">' + esc(object.text || '') + '</div>';
+    return '<div class="pptx-object pptx-text ' + animation + selected + '"' + editable + ' style="' + esc(style + textStyle) + '">' + esc(object.text || '') + '</div>';
   }).join('') + '</div>';
 }
 
@@ -3301,6 +3321,9 @@ function applySlidesToLesson(slides, filename) {
     const isLast = index === slides.length - 1;
     const text = slide.rawText || slide.title || ('Slide ' + slide.number);
     const content = slide.bullets.length ? slide.bullets.join(' ') : text;
+    const editableObjects = Array.isArray(slide.objects) && slide.objects.length
+      ? slide.objects
+      : buildEditablePptxFallbackObjects(slide);
     return {
       id: 'pptx-scene-' + slide.number,
       type: isFirst ? 'cover' : (isLast ? 'summary' : 'content'),
@@ -3310,7 +3333,7 @@ function applySlidesToLesson(slides, filename) {
       bullets: slide.bullets.slice(0, 12),
       rawText: text,
       images: slide.images || [],
-      pptxObjects: slide.objects || [],
+      pptxObjects: editableObjects,
       pptxSize: slide.size || null,
       narration: narrationLine('Trình bày nội dung slide ' + slide.number + ': ' + text.slice(0, 220), state.plan),
       visual: 'Nguồn PPTX: ' + filename + ' - slide ' + slide.number,
@@ -3322,19 +3345,6 @@ function applySlidesToLesson(slides, filename) {
       duration: Math.max(45, Math.min(120, 25 + Math.ceil(text.length / 8)))
     };
   });
-  if (state.plan.includeQuiz && scenes.length > 2) {
-    scenes.splice(Math.min(scenes.length - 1, 3), 0, {
-      id: 'pptx-quiz-' + Date.now(),
-      type: 'quiz',
-      title: 'Kiểm tra nhanh từ PowerPoint',
-      layout: 'Câu hỏi trắc nghiệm + phản hồi',
-      content: 'Chọn ý chính phù hợp nhất với bài trình chiếu vừa nhập.',
-      narration: narrationLine('Mời học sinh kiểm tra nhanh sau khi xem các slide đầu.', state.plan),
-      visual: 'Quiz tự sinh từ nội dung PPTX',
-      duration: 55,
-      question: buildPptxQuestion(slides)
-    });
-  }
   state.lesson = {
     title: topicInput.value || titleFromFile || state.plan.topic,
     mode: 'Bài giảng nhập từ PPTX',
@@ -3351,6 +3361,70 @@ function applySlidesToLesson(slides, filename) {
   setActiveTab('studio');
   if (history.replaceState) history.replaceState(null, '', '#studio');
   renderOutput();
+}
+
+function buildEditablePptxFallbackObjects(slide) {
+  const objects = [];
+  const title = slide.title || ('Slide ' + slide.number);
+  const bullets = Array.isArray(slide.bullets) ? slide.bullets.filter(Boolean) : [];
+  if (title) {
+    objects.push({
+      type: 'text',
+      shapeId: 'fallback-title-' + slide.number,
+      text: title,
+      left: 6,
+      top: 6,
+      width: 88,
+      height: 12,
+      style: { fontSize: 30, color: '#0b1f3a', bold: true }
+    });
+  }
+  if (bullets.length) {
+    objects.push({
+      type: 'text',
+      shapeId: 'fallback-body-' + slide.number,
+      text: bullets.map(function(item) { return '• ' + item; }).join('\n'),
+      left: 7,
+      top: 20,
+      width: 86,
+      height: 24,
+      style: { fontSize: 20, color: '#1f2f45', bold: false }
+    });
+  }
+  const images = Array.isArray(slide.images) ? slide.images : [];
+  images.slice(0, 6).forEach(function(image, index) {
+    const count = Math.min(images.length, 3);
+    const width = count > 1 ? 36 : 52;
+    const height = count > 1 ? 36 : 46;
+    const left = count > 1 ? 8 + (index % 2) * 44 : 24;
+    const top = count > 1 ? 48 + Math.floor(index / 2) * 24 : 43;
+    objects.push({
+      type: 'image',
+      shapeId: 'fallback-image-' + slide.number + '-' + index,
+      relId: image.relId || '',
+      src: image.dataUrl,
+      alt: image.alt || image.name || 'Ảnh từ PowerPoint',
+      name: image.name || ('Ảnh ' + (index + 1)),
+      left: left,
+      top: top,
+      width: width,
+      height: height,
+      animation: null
+    });
+  });
+  if (!objects.length && slide.rawText) {
+    objects.push({
+      type: 'text',
+      shapeId: 'fallback-raw-' + slide.number,
+      text: slide.rawText,
+      left: 8,
+      top: 12,
+      width: 84,
+      height: 70,
+      style: { fontSize: 22, color: '#1f2f45' }
+    });
+  }
+  return objects;
 }
 
 function nearestSlideCount(count) {
@@ -3545,6 +3619,10 @@ function bindOutputEvents() {
   });
 
   Array.from(document.querySelectorAll('[data-pptx-object-text]')).forEach(function(control) {
+    control.addEventListener('focus', function() {
+      state.selectedPptxObject = Number(control.dataset.pptxObjectText) || 0;
+      control.classList.add('is-selected');
+    });
     control.addEventListener('blur', function() {
       updatePptxObject(Number(control.dataset.pptxObjectText), 'text', control.innerText, true);
     });
