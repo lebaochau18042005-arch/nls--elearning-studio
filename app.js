@@ -164,6 +164,7 @@ const state = {
   lesson: null,
   lessonSignature: '',
   selectedScene: 0,
+  selectedPptxObject: 0,
   previewIndex: 0,
   previewAnswer: null
 };
@@ -1290,16 +1291,47 @@ function renderPptxResourcePanel(scene, lesson) {
   const texts = objects.filter(function(object) { return object.type === 'text'; });
   const animated = objects.filter(function(object) { return object.animation; });
   const cards = objects.length ? objects.slice(0, 12).map(function(object, index) {
+    const selected = index === Number(state.selectedPptxObject || 0) ? ' is-active' : '';
     if (object.type === 'image') {
-      return '<article class="resource-card"><img src="' + esc(object.src) + '" alt="' + esc(object.alt || object.name || 'Ảnh PPTX') + '" /><small>' + esc(object.name || ('Ảnh ' + (index + 1))) + '</small></article>';
+      return '<button class="resource-card' + selected + '" type="button" data-pptx-object-select="' + index + '"><img src="' + esc(object.src) + '" alt="' + esc(object.alt || object.name || 'Ảnh PPTX') + '" /><small>' + esc(object.name || ('Ảnh ' + (index + 1))) + '</small></button>';
     }
-    return '<article class="resource-card text-resource"><strong>TXT</strong><small>' + esc((object.text || '').slice(0, 42) || ('Văn bản ' + (index + 1))) + '</small></article>';
+    return '<button class="resource-card text-resource' + selected + '" type="button" data-pptx-object-select="' + index + '"><strong>TXT</strong><small>' + esc((object.text || '').slice(0, 42) || ('Văn bản ' + (index + 1))) + '</small></button>';
   }).join('') : '<p class="mini-note">Slide này chưa có tài nguyên tái dựng từ PPTX.</p>';
   return '<section class="pptx-resource-dock" aria-label="Tài nguyên từ PPTX">' +
     '<div class="pane-title"><strong>Tài nguyên</strong><span>' + objects.length + '</span></div>' +
     '<div class="resource-summary"><span>Ảnh: ' + images.length + '</span><span>Văn bản: ' + texts.length + '</span><span>Animation: ' + animated.length + '</span></div>' +
     '<div class="resource-grid">' + cards + '</div>' +
+    renderPptxObjectEditor(scene) +
   '</section>';
+}
+
+function renderPptxObjectEditor(scene) {
+  const objects = Array.isArray(scene.pptxObjects) ? scene.pptxObjects : [];
+  if (!objects.length) return '';
+  const index = Math.max(0, Math.min(Number(state.selectedPptxObject || 0), objects.length - 1));
+  const object = objects[index] || {};
+  const textEditor = object.type === 'text'
+    ? '<label class="field"><span>Nội dung chữ</span><textarea data-pptx-object-field="text" data-pptx-object-index="' + index + '" rows="3">' + esc(object.text || '') + '</textarea></label>'
+    : '<label class="field"><span>Tên ảnh</span><input data-pptx-object-field="name" data-pptx-object-index="' + index + '" value="' + esc(object.name || 'Ảnh PPTX') + '" /></label>';
+  return '<div class="pptx-object-editor">' +
+    '<div class="pane-title"><strong>Chỉnh đối tượng</strong><span>' + esc(object.type === 'image' ? 'Ảnh' : 'Văn bản') + ' ' + (index + 1) + '</span></div>' +
+    textEditor +
+    '<div class="field-grid">' +
+      '<label class="field"><span>Trái %</span><input type="number" step="0.1" data-pptx-object-field="left" data-pptx-object-index="' + index + '" value="' + esc(roundNumber(object.left, 1)) + '" /></label>' +
+      '<label class="field"><span>Trên %</span><input type="number" step="0.1" data-pptx-object-field="top" data-pptx-object-index="' + index + '" value="' + esc(roundNumber(object.top, 1)) + '" /></label>' +
+    '</div>' +
+    '<div class="field-grid">' +
+      '<label class="field"><span>Rộng %</span><input type="number" step="0.1" min="1" data-pptx-object-field="width" data-pptx-object-index="' + index + '" value="' + esc(roundNumber(object.width, 1)) + '" /></label>' +
+      '<label class="field"><span>Cao %</span><input type="number" step="0.1" min="1" data-pptx-object-field="height" data-pptx-object-index="' + index + '" value="' + esc(roundNumber(object.height, 1)) + '" /></label>' +
+    '</div>' +
+    '<div class="scene-actions"><button class="utility-button danger" type="button" data-delete-pptx-object="' + index + '">Xóa đối tượng</button></div>' +
+    '<p class="mini-note">Chữ có thể sửa trực tiếp trên slide. Ảnh có thể chọn, đổi kích thước, di chuyển hoặc xóa.</p>' +
+  '</div>';
+}
+
+function roundNumber(value, digits) {
+  const factor = Math.pow(10, digits || 0);
+  return Math.round((Number(value) || 0) * factor) / factor;
 }
 
 function renderAiAssistantPanel() {
@@ -1543,11 +1575,15 @@ function renderPptxReplica(scene, mode) {
   return '<div class="pptx-replica" aria-label="Slide PowerPoint gốc">' + objects.map(function(object, index) {
     const style = pptxObjectStyle(object);
     const animation = mode === 'thumb' ? '' : pptxAnimationClass(object.animation, index);
+    const selectable = mode === 'canvas';
+    const selected = selectable && index === Number(state.selectedPptxObject || 0) ? ' is-selected' : '';
+    const selectAttrs = selectable ? ' data-pptx-object-select="' + index + '"' : '';
     if (object.type === 'image') {
-      return '<div class="pptx-object pptx-image ' + animation + '" style="' + esc(style) + '"><img src="' + esc(object.src) + '" alt="' + esc(object.alt || object.name || 'Ảnh từ PowerPoint') + '" /></div>';
+      return '<div class="pptx-object pptx-image ' + animation + selected + '"' + selectAttrs + ' style="' + esc(style) + '"><img src="' + esc(object.src) + '" alt="' + esc(object.alt || object.name || 'Ảnh từ PowerPoint') + '" /></div>';
     }
     const textStyle = pptxTextInlineStyle(object.style || {});
-    return '<div class="pptx-object pptx-text ' + animation + '" style="' + esc(style + textStyle) + '">' + esc(object.text || '') + '</div>';
+    const editable = selectable ? ' contenteditable="true" spellcheck="false" data-pptx-object-text="' + index + '"' : '';
+    return '<div class="pptx-object pptx-text ' + animation + selected + '"' + selectAttrs + editable + ' style="' + esc(style + textStyle) + '">' + esc(object.text || '') + '</div>';
   }).join('') + '</div>';
 }
 
@@ -2248,6 +2284,55 @@ function updateSceneObject(index, field, value) {
   if (!object || ['label', 'text', 'action'].indexOf(field) < 0) return;
   object[field] = value;
   renderOutput();
+}
+
+function selectPptxObject(index) {
+  const scene = currentScene();
+  const objects = scene && Array.isArray(scene.pptxObjects) ? scene.pptxObjects : [];
+  if (!objects.length) return;
+  state.selectedPptxObject = Math.max(0, Math.min(Number(index) || 0, objects.length - 1));
+  renderOutput();
+}
+
+function updatePptxObject(index, field, value, shouldRender) {
+  const scene = currentScene();
+  const objects = scene && Array.isArray(scene.pptxObjects) ? scene.pptxObjects : [];
+  const object = objects[index];
+  if (!object) return;
+  if (field === 'text' && object.type === 'text') {
+    object.text = value;
+    syncSceneTextFromPptx(scene);
+  } else if (field === 'name' && object.type === 'image') {
+    object.name = value;
+  } else if (['left', 'top', 'width', 'height'].indexOf(field) >= 0) {
+    const min = field === 'width' || field === 'height' ? 1 : -20;
+    object[field] = clampNumber(value, min, 120, field === 'width' || field === 'height' ? 10 : 0);
+  } else {
+    return;
+  }
+  state.selectedPptxObject = index;
+  if (shouldRender !== false) renderOutput();
+}
+
+function deletePptxObject(index) {
+  const scene = currentScene();
+  const objects = scene && Array.isArray(scene.pptxObjects) ? scene.pptxObjects : [];
+  if (index < 0 || index >= objects.length) return;
+  objects.splice(index, 1);
+  state.selectedPptxObject = Math.max(0, Math.min(index, objects.length - 1));
+  syncSceneTextFromPptx(scene);
+  renderOutput();
+}
+
+function syncSceneTextFromPptx(scene) {
+  const textObjects = Array.isArray(scene.pptxObjects) ? scene.pptxObjects.filter(function(object) {
+    return object.type === 'text' && object.text;
+  }) : [];
+  if (!textObjects.length) return;
+  scene.rawText = textObjects.map(function(object) { return object.text; }).join('\n');
+  scene.title = textObjects[0].text.split(/\n/).filter(Boolean)[0] || scene.title;
+  scene.bullets = textObjects.slice(1).map(function(object) { return object.text; }).filter(Boolean).slice(0, 12);
+  scene.content = scene.bullets.length ? scene.bullets.join(' ') : scene.rawText;
 }
 
 function deleteSceneObject(index) {
@@ -3450,6 +3535,35 @@ function bindOutputEvents() {
     input.addEventListener('change', function() {
       updateSceneObject(Number(input.dataset.objectIndex), input.dataset.objectField, input.value);
     });
+  });
+
+  Array.from(document.querySelectorAll('[data-pptx-object-select]')).forEach(function(control) {
+    control.addEventListener('click', function(event) {
+      event.stopPropagation();
+      selectPptxObject(Number(control.dataset.pptxObjectSelect));
+    });
+  });
+
+  Array.from(document.querySelectorAll('[data-pptx-object-text]')).forEach(function(control) {
+    control.addEventListener('blur', function() {
+      updatePptxObject(Number(control.dataset.pptxObjectText), 'text', control.innerText, true);
+    });
+    control.addEventListener('keydown', function(event) {
+      if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault();
+        control.blur();
+      }
+    });
+  });
+
+  Array.from(document.querySelectorAll('[data-pptx-object-field]')).forEach(function(input) {
+    input.addEventListener('change', function() {
+      updatePptxObject(Number(input.dataset.pptxObjectIndex), input.dataset.pptxObjectField, input.value, true);
+    });
+  });
+
+  Array.from(document.querySelectorAll('[data-delete-pptx-object]')).forEach(function(button) {
+    button.addEventListener('click', function() { deletePptxObject(Number(button.dataset.deletePptxObject)); });
   });
 
   Array.from(document.querySelectorAll('[data-delete-object]')).forEach(function(button) {

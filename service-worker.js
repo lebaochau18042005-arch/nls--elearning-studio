@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nls-elearning-studio-v21-no-blank-slide';
+const CACHE_NAME = 'nls-elearning-studio-v22-editable-pptx-objects';
 const APP_SHELL = [
   './',
   './index.html',

@@ -709,6 +709,13 @@ button:focus-visible {
   border-radius: 7px;
   background: #f8fbff;
   overflow: hidden;
+  text-align: left;
+  cursor: pointer;
+}
+
+.resource-card.is-active {
+  border-color: var(--teal);
+  box-shadow: 0 0 0 2px rgba(15, 118, 110, 0.16);
 }
 
 .resource-card img {
@@ -746,6 +753,18 @@ button:focus-visible {
   background: #e8f0f8;
   color: var(--blue);
   font-size: 0.72rem;
+}
+
+.pptx-object-editor {
+  border-top: 1px solid var(--line);
+  padding-bottom: 10px;
+}
+
+.pptx-object-editor > .field,
+.pptx-object-editor > .field-grid,
+.pptx-object-editor > .scene-actions,
+.pptx-object-editor > .mini-note {
+  margin: 10px;
 }
 
 .inspector-section {
@@ -1111,6 +1130,17 @@ button:focus-visible {
 .pptx-object {
   position: absolute;
   box-sizing: border-box;
+  outline: 1px solid transparent;
+  outline-offset: 2px;
+}
+
+.pptx-object.is-selected {
+  outline-color: #0f766e;
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.18);
+}
+
+.pptx-slide-frame .pptx-object {
+  cursor: move;
 }
 
 .pptx-image img {
@@ -1128,6 +1158,16 @@ button:focus-visible {
   padding: 0.3% 0.5%;
   line-height: 1.16;
   font-family: Cambria, "Times New Roman", serif;
+}
+
+.pptx-text[contenteditable="true"] {
+  cursor: text;
+  user-select: text;
+}
+
+.pptx-text[contenteditable="true"]:focus {
+  outline: 2px solid #1d8fd6;
+  background: rgba(255, 255, 255, 0.86);
 }
 
 .pptx-anim {
