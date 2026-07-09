@@ -1140,7 +1140,8 @@ function renderStudio() {
   const scene = currentScene();
   if (!lesson || !scene) return '<section class="empty-state"><h2>Chưa có kịch bản</h2><p>Hãy tạo kế hoạch để app sinh bài giảng e-learning.</p></section>';
   const isPptxMode = isPptxLesson(lesson);
-  if (isPptxMode) ensureEditablePptxScenes(lesson);
+  if (isPptxMode) normalizePptxLesson(lesson);
+  const activeScene = currentScene();
   const sceneButtons = lesson.scenes.map(function(item, index) {
     if (isPptxMode) return renderSlideThumbnail(item, index);
     return '<button class="scene-chip' + (index === state.selectedScene ? ' is-active' : '') + '" type="button" data-select-scene="' + index + '">' +
@@ -1152,21 +1153,39 @@ function renderStudio() {
     '<div class="author-workspace">' +
       '<aside class="slides-pane" aria-label="Danh sách slide"><div class="pane-title"><strong>Slide chính</strong><span>' + lesson.scenes.length + '</span></div><div class="scene-list' + (isPptxMode ? ' thumbnail-list' : '') + '">' + sceneButtons + '<button class="add-scene-button" type="button" data-add-scene="1">+ Thêm slide</button></div></aside>' +
       '<main class="canvas-pane">' +
-        '<div class="canvas-toolbar"><div><strong>' + (isPptxMode ? 'Màn hình chính từ PPTX' : 'Canvas') + '</strong><span>' + esc(sceneTypeLabel(scene.type)) + ' · ' + esc(scene.duration) + 's</span></div><div class="canvas-tools"><span>16:9</span><span>Fit</span><span>100%</span></div></div>' +
-        '<div class="canvas-stage">' + renderSlideCanvas(scene, state.selectedScene, lesson.scenes.length) + '</div>' +
+        '<div class="canvas-toolbar"><div><strong>' + (isPptxMode ? 'Màn hình chính từ PPTX' : 'Canvas') + '</strong><span>' + esc(sceneTypeLabel(activeScene.type)) + ' · ' + esc(activeScene.duration) + 's</span></div><div class="canvas-tools"><span>16:9</span><span>Fit</span><span>100%</span></div></div>' +
+        '<div class="canvas-stage">' + renderSlideCanvas(activeScene, state.selectedScene, lesson.scenes.length) + '</div>' +
       '</main>' +
-      '<aside class="inspector-pane" aria-label="Thuộc tính và tương tác">' + renderSceneInspector(scene, lesson) + (isPptxMode ? renderPptxResourcePanel(scene, lesson) : '') + '</aside>' +
+      '<aside class="inspector-pane" aria-label="Thuộc tính và tương tác">' + renderSceneInspector(activeScene, lesson) + (isPptxMode ? renderPptxResourcePanel(activeScene, lesson) : '') + '</aside>' +
     '</div>' +
     renderAuthorTimeline(lesson) +
     renderAiAssistantPanel() +
   '</section>';
 }
 
+function normalizePptxLesson(lesson) {
+  removeAutoPptxQuizScenes(lesson);
+  ensureEditablePptxScenes(lesson);
+  if (state.selectedScene >= lesson.scenes.length) state.selectedScene = Math.max(0, lesson.scenes.length - 1);
+}
+
+function removeAutoPptxQuizScenes(lesson) {
+  const scenes = Array.isArray(lesson.scenes) ? lesson.scenes : [];
+  const filtered = scenes.filter(function(scene) {
+    const title = String(scene.title || '');
+    const id = String(scene.id || '');
+    return !(id.indexOf('pptx-quiz-') === 0 || title.indexOf('Kiểm tra nhanh từ PowerPoint') >= 0);
+  });
+  if (filtered.length !== scenes.length) lesson.scenes = filtered;
+}
+
 function ensureEditablePptxScenes(lesson) {
   const scenes = Array.isArray(lesson.scenes) ? lesson.scenes : [];
   scenes.forEach(function(scene, index) {
     if (Array.isArray(scene.pptxObjects) && scene.pptxObjects.length) return;
-    const hasPptxSignals = String(scene.id || '').indexOf('pptx-') === 0 ||
+    if (scene.type === 'quiz') return;
+    const hasPptxSignals = (lesson.source && lesson.source.type === 'pptx') ||
+      String(scene.id || '').indexOf('pptx-') === 0 ||
       String(scene.layout || '').toLowerCase().indexOf('powerpoint') >= 0 ||
       String(scene.visual || '').indexOf('PPTX') >= 0 ||
       (Array.isArray(scene.images) && scene.images.length);
@@ -1575,7 +1594,7 @@ function renderSlideCanvas(scene, index, total) {
   ].join(';');
   if (Array.isArray(scene.pptxObjects) && scene.pptxObjects.length) {
     return '<div class="slide-frame slide-' + esc(scene.type) + ' designed-slide pptx-slide-frame" style="' + esc(designStyle) + '">' +
-      renderPptxReplica(scene, 'canvas') + quiz + script +
+      renderPptxReplica(scene, 'canvas') +
     '</div>';
   }
   return '<div class="slide-frame slide-' + esc(scene.type) + ' designed-slide" style="' + esc(designStyle) + '">' +
@@ -1594,7 +1613,7 @@ function renderPptxReplica(scene, mode) {
   if (!objects.length) return '';
   return '<div class="pptx-replica" aria-label="Slide PowerPoint gốc">' + objects.map(function(object, index) {
     const style = pptxObjectStyle(object);
-    const animation = mode === 'thumb' ? '' : pptxAnimationClass(object.animation, index);
+    const animation = mode === 'thumb' || mode === 'canvas' ? '' : pptxAnimationClass(object.animation, index);
     const selectable = mode === 'canvas';
     const selected = selectable && index === Number(state.selectedPptxObject || 0) ? ' is-selected' : '';
     const selectAttrs = selectable ? ' data-pptx-object-select="' + index + '"' : '';
