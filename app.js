@@ -3459,6 +3459,9 @@ function buildPackageFiles(payload) {
 
 function buildCourseIndexHtml(payload) {
   const title = escXml(payload.lesson.title || payload.plan.topic || 'NLS E-Learning Course');
+  const css = buildCoursePlayerCss();
+  const data = 'window.NLS_COURSE_DATA = ' + safeJson(payload) + ';\n';
+  const player = buildCoursePlayerJs(payload.packageStandard);
   return [
     '<!doctype html>',
     '<html lang="vi">',
@@ -3466,12 +3469,18 @@ function buildCourseIndexHtml(payload) {
     '<meta charset="utf-8" />',
     '<meta name="viewport" content="width=device-width, initial-scale=1" />',
     '<title>' + title + '</title>',
-    '<link rel="stylesheet" href="player.css" />',
+    '<style>',
+    css,
+    '</style>',
     '</head>',
     '<body>',
     '<main id="courseApp" class="course-app" aria-live="polite"></main>',
-    '<script src="course-data.js"></script>',
-    '<script src="player.js"></script>',
+    '<script>',
+    data,
+    '</script>',
+    '<script>',
+    player,
+    '</script>',
     '</body>',
     '</html>'
   ].join('\n');
