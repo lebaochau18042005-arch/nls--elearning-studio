@@ -1174,7 +1174,10 @@ function removeAutoPptxQuizScenes(lesson) {
   const filtered = scenes.filter(function(scene) {
     const title = String(scene.title || '');
     const id = String(scene.id || '');
-    return !(id.indexOf('pptx-quiz-') === 0 || title.indexOf('Kiểm tra nhanh từ PowerPoint') >= 0);
+    const visual = String(scene.visual || '');
+    return !(id.indexOf('pptx-quiz-') === 0 ||
+      title.indexOf('Kiểm tra nhanh từ PowerPoint') >= 0 ||
+      (scene.type === 'quiz' && visual.indexOf('PPTX') >= 0));
   });
   if (filtered.length !== scenes.length) lesson.scenes = filtered;
 }
@@ -1184,11 +1187,7 @@ function ensureEditablePptxScenes(lesson) {
   scenes.forEach(function(scene, index) {
     if (Array.isArray(scene.pptxObjects) && scene.pptxObjects.length) return;
     if (scene.type === 'quiz') return;
-    const hasPptxSignals = (lesson.source && lesson.source.type === 'pptx') ||
-      String(scene.id || '').indexOf('pptx-') === 0 ||
-      String(scene.layout || '').toLowerCase().indexOf('powerpoint') >= 0 ||
-      String(scene.visual || '').indexOf('PPTX') >= 0 ||
-      (Array.isArray(scene.images) && scene.images.length);
+    const hasPptxSignals = (lesson.source && lesson.source.type === 'pptx') || isPptxScene(scene);
     if (!hasPptxSignals) return;
     scene.pptxObjects = buildEditablePptxFallbackObjects({
       number: index + 1,
@@ -1577,12 +1576,6 @@ function renderQuestionSpecificEditor(question, meta) {
 }
 
 function renderSlideCanvas(scene, index, total) {
-  const quiz = scene.type === 'quiz' && scene.question ? '<div class="canvas-quiz">' + esc(scene.question.prompt) + '</div>' : '';
-  const script = state.lesson.includeTranscript ? '<p class="canvas-script">' + esc(scene.narration) + '</p>' : '';
-  const objects = renderSceneObjects(scene);
-  const content = renderSceneContent(scene);
-  const media = renderSceneMedia(scene);
-  const fallback = renderSlideFallback(scene, index, total);
   const design = currentDesign();
   const designStyle = [
     '--slide-accent:' + (design.accent || '#255c99'),
@@ -1592,14 +1585,41 @@ function renderSlideCanvas(scene, index, total) {
     'font-family:' + (design.font || 'Arial, Helvetica, sans-serif'),
     'aspect-ratio:' + (design.ratio || '16 / 9')
   ].join(';');
-  if (Array.isArray(scene.pptxObjects) && scene.pptxObjects.length) {
+  if (isPptxScene(scene)) {
+    ensureSceneEditablePptxObjects(scene, index);
     return '<div class="slide-frame slide-' + esc(scene.type) + ' designed-slide pptx-slide-frame" style="' + esc(designStyle) + '">' +
       renderPptxReplica(scene, 'canvas') +
     '</div>';
   }
+  const quiz = scene.type === 'quiz' && scene.question ? '<div class="canvas-quiz">' + esc(scene.question.prompt) + '</div>' : '';
+  const script = state.lesson.includeTranscript ? '<p class="canvas-script">' + esc(scene.narration) + '</p>' : '';
+  const objects = renderSceneObjects(scene);
+  const content = renderSceneContent(scene);
+  const media = renderSceneMedia(scene);
+  const fallback = renderSlideFallback(scene, index, total);
   return '<div class="slide-frame slide-' + esc(scene.type) + ' designed-slide" style="' + esc(designStyle) + '">' +
     fallback + content + media + objects + quiz + script +
   '</div>';
+}
+
+function isPptxScene(scene) {
+  if (!scene) return false;
+  return String(scene.id || '').indexOf('pptx-') === 0 ||
+    String(scene.layout || '').toLowerCase().indexOf('powerpoint') >= 0 ||
+    String(scene.visual || '').toUpperCase().indexOf('PPTX') >= 0 ||
+    (Array.isArray(scene.pptxObjects) && scene.pptxObjects.length) ||
+    (Array.isArray(scene.images) && scene.images.length);
+}
+
+function ensureSceneEditablePptxObjects(scene, index) {
+  if (Array.isArray(scene.pptxObjects) && scene.pptxObjects.length) return;
+  scene.pptxObjects = buildEditablePptxFallbackObjects({
+    number: index + 1,
+    title: scene.title,
+    bullets: Array.isArray(scene.bullets) ? scene.bullets : (scene.content ? [scene.content] : []),
+    rawText: scene.rawText || scene.content || scene.narration || '',
+    images: scene.images || []
+  });
 }
 
 function renderSlideFallback(scene, index, total) {

@@ -5,7 +5,7 @@ set NLS_STUDIO_NO_OPEN=1
 echo Starting NLS E-Learning Studio...
 echo.
 echo Open this link in Chrome:
-echo http://127.0.0.1:4173/?v=20260709-studio21#studio
+echo http://127.0.0.1:4173/?v=20260709-studio22#studio
 echo.
 echo Keep this window open while using the app.
 echo Press Ctrl+C to stop the server.

@@ -564,6 +564,7 @@ button:focus-visible {
   min-height: 560px;
   padding: 18px 28px;
   background: #ececec;
+  place-items: start center;
 }
 
 .pptx-authoring-mode .canvas-stage .slide-frame {

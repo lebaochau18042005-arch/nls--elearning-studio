@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nls-elearning-studio-v24-pptx-edit-clean';
+const CACHE_NAME = 'nls-elearning-studio-v25-force-pptx-editor';
 const APP_SHELL = [
   './',
   './index.html',
